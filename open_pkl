@@ -1,0 +1,6 @@
+import pickle
+import pdb
+
+with open('/home/arie/Documents/phd/code/NSNet/SATSolving/3-sat/train_first_4000/marginals.pkl', 'rb') as f:
+    data = pickle.load(f)
+    pdb.set_trace()

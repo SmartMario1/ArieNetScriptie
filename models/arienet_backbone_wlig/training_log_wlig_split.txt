@@ -1,0 +1,365 @@
+
+============================================================
+Start: 2026-03-16 11:44:25
+Args: {'data_dir': None, 'train_dir': 'SATSolving/3-sat/train_first_4000_ArieNet', 'val_dir': 'SATSolving/3-sat/valid_first_1000_ArieNet\xa0', 'batch_size': 16, 'dim': 128, 'n_rounds': 16, 'n_mlp_layers': 3, 'activation': 'relu', 'n_epochs': 60, 'lr': 2e-05, 'seed': 77, 'num_workers': 2, 'device': 'cuda', 'save_dir': 'models/arienet_backbone_wlig', 'run_name': 'wlig_split'}
+============================================================
+
+Epoch 1/60
+Train Loss: 0.539442
+Train CM:
+[[33624 10220]
+ [11425 32956]]
+
+Epoch 2/60
+Train Loss: 0.453914
+Train CM:
+[[34899  8945]
+ [ 9606 34775]]
+
+Epoch 3/60
+Train Loss: 0.441266
+Train CM:
+[[35167  8677]
+ [ 9208 35173]]
+
+Epoch 4/60
+Train Loss: 0.434551
+Train CM:
+[[35363  8481]
+ [ 9060 35321]]
+
+Epoch 5/60
+Train Loss: 0.429182
+Train CM:
+[[35469  8375]
+ [ 8825 35556]]
+
+Epoch 6/60
+Train Loss: 0.423538
+Train CM:
+[[35622  8222]
+ [ 8740 35641]]
+
+Epoch 7/60
+Train Loss: 0.420584
+Train CM:
+[[35600  8244]
+ [ 8559 35822]]
+
+Epoch 8/60
+Train Loss: 0.418846
+Train CM:
+[[35650  8194]
+ [ 8563 35818]]
+
+Epoch 9/60
+Train Loss: 0.417970
+Train CM:
+[[35667  8177]
+ [ 8532 35849]]
+
+Epoch 10/60
+Train Loss: 0.416449
+Train CM:
+[[35760  8084]
+ [ 8520 35861]]
+
+Epoch 11/60
+Train Loss: 0.414666
+Train CM:
+[[35710  8134]
+ [ 8487 35894]]
+
+Epoch 12/60
+Train Loss: 0.415931
+Train CM:
+[[35713  8131]
+ [ 8488 35893]]
+
+Epoch 13/60
+Train Loss: 0.412145
+Train CM:
+[[35728  8116]
+ [ 8394 35987]]
+
+Epoch 14/60
+Train Loss: 0.412453
+Train CM:
+[[35718  8126]
+ [ 8468 35913]]
+
+Epoch 15/60
+Train Loss: 0.411071
+Train CM:
+[[35808  8036]
+ [ 8406 35975]]
+
+Epoch 16/60
+Train Loss: 0.410900
+Train CM:
+[[35802  8042]
+ [ 8387 35994]]
+
+Epoch 17/60
+Train Loss: 0.409609
+Train CM:
+[[35857  7987]
+ [ 8353 36028]]
+
+Epoch 18/60
+Train Loss: 0.409561
+Train CM:
+[[35833  8011]
+ [ 8391 35990]]
+
+Epoch 19/60
+Train Loss: 0.409907
+Train CM:
+[[35814  8030]
+ [ 8327 36054]]
+
+Epoch 20/60
+Train Loss: 0.408828
+Train CM:
+[[35799  8045]
+ [ 8254 36127]]
+
+Epoch 21/60
+Train Loss: 0.408878
+Train CM:
+[[35745  8099]
+ [ 8229 36152]]
+
+Epoch 22/60
+Train Loss: 0.407685
+Train CM:
+[[35827  8017]
+ [ 8268 36113]]
+
+Epoch 23/60
+Train Loss: 0.407644
+Train CM:
+[[35847  7997]
+ [ 8287 36094]]
+
+Epoch 24/60
+Train Loss: 0.408247
+Train CM:
+[[35832  8012]
+ [ 8299 36082]]
+
+Epoch 25/60
+Train Loss: 0.405056
+Train CM:
+[[35893  7951]
+ [ 8298 36083]]
+
+Epoch 26/60
+Train Loss: 0.406199
+Train CM:
+[[35891  7953]
+ [ 8279 36102]]
+
+Epoch 27/60
+Train Loss: 0.405328
+Train CM:
+[[35867  7977]
+ [ 8306 36075]]
+
+Epoch 28/60
+Train Loss: 0.406051
+Train CM:
+[[35832  8012]
+ [ 8199 36182]]
+
+Epoch 29/60
+Train Loss: 0.405841
+Train CM:
+[[35849  7995]
+ [ 8208 36173]]
+
+Epoch 30/60
+Train Loss: 0.404645
+Train CM:
+[[35850  7994]
+ [ 8185 36196]]
+
+Epoch 31/60
+Train Loss: 0.405182
+Train CM:
+[[35823  8021]
+ [ 8156 36225]]
+
+Epoch 32/60
+Train Loss: 0.403234
+Train CM:
+[[35944  7900]
+ [ 8184 36197]]
+
+Epoch 33/60
+Train Loss: 0.405267
+Train CM:
+[[35800  8044]
+ [ 8253 36128]]
+
+Epoch 34/60
+Train Loss: 0.402349
+Train CM:
+[[35876  7968]
+ [ 8186 36195]]
+
+Epoch 35/60
+Train Loss: 0.403727
+Train CM:
+[[35868  7976]
+ [ 8217 36164]]
+
+Epoch 36/60
+Train Loss: 0.403298
+Train CM:
+[[35914  7930]
+ [ 8135 36246]]
+
+Epoch 37/60
+Train Loss: 0.401681
+Train CM:
+[[35923  7921]
+ [ 8111 36270]]
+
+Epoch 38/60
+Train Loss: 0.402199
+Train CM:
+[[35972  7872]
+ [ 8106 36275]]
+
+Epoch 39/60
+Train Loss: 0.401861
+Train CM:
+[[35941  7903]
+ [ 8098 36283]]
+
+Epoch 40/60
+Train Loss: 0.401574
+Train CM:
+[[35963  7881]
+ [ 8139 36242]]
+
+Epoch 41/60
+Train Loss: 0.401030
+Train CM:
+[[35922  7922]
+ [ 8126 36255]]
+
+Epoch 42/60
+Train Loss: 0.400335
+Train CM:
+[[35950  7894]
+ [ 8082 36299]]
+
+Epoch 43/60
+Train Loss: 0.399343
+Train CM:
+[[35980  7864]
+ [ 8057 36324]]
+
+Epoch 44/60
+Train Loss: 0.399800
+Train CM:
+[[35947  7897]
+ [ 8069 36312]]
+
+Epoch 45/60
+Train Loss: 0.398501
+Train CM:
+[[35936  7908]
+ [ 8032 36349]]
+
+Epoch 46/60
+Train Loss: 0.399729
+Train CM:
+[[35986  7858]
+ [ 8074 36307]]
+
+Epoch 47/60
+Train Loss: 0.397962
+Train CM:
+[[35958  7886]
+ [ 7986 36395]]
+
+Epoch 48/60
+Train Loss: 0.399054
+Train CM:
+[[35964  7880]
+ [ 8036 36345]]
+
+Epoch 49/60
+Train Loss: 0.403002
+Train CM:
+[[35857  7987]
+ [ 8066 36315]]
+
+Epoch 50/60
+Train Loss: 0.396644
+Train CM:
+[[36052  7792]
+ [ 8069 36312]]
+
+Epoch 51/60
+Train Loss: 0.397495
+Train CM:
+[[35987  7857]
+ [ 8028 36353]]
+
+Epoch 52/60
+Train Loss: 0.396799
+Train CM:
+[[36041  7803]
+ [ 8033 36348]]
+
+Epoch 53/60
+Train Loss: 0.397127
+Train CM:
+[[35953  7891]
+ [ 7965 36416]]
+
+Epoch 54/60
+Train Loss: 0.395975
+Train CM:
+[[36045  7799]
+ [ 7995 36386]]
+
+Epoch 55/60
+Train Loss: 0.395705
+Train CM:
+[[36061  7783]
+ [ 8047 36334]]
+
+Epoch 56/60
+Train Loss: 0.395716
+Train CM:
+[[36035  7809]
+ [ 7958 36423]]
+
+Epoch 57/60
+Train Loss: 0.396782
+Train CM:
+[[35991  7853]
+ [ 7901 36480]]
+
+Epoch 58/60
+Train Loss: 0.395625
+Train CM:
+[[35993  7851]
+ [ 7974 36407]]
+
+Epoch 59/60
+Train Loss: 0.395563
+Train CM:
+[[36022  7822]
+ [ 7955 36426]]
+
+Epoch 60/60
+Train Loss: 0.396098
+Train CM:
+[[36044  7800]
+ [ 7944 36437]]

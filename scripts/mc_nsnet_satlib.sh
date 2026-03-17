@@ -1,0 +1,2 @@
+python src/train_model.py model-counting mc_nsnet_satlib /home/arie/Documents/phd/code/NSNet/ModelCounting/SATLIB/train/ --valid_dir /home/arie/Documents/phd/code/NSNet/ModelCounting/SATLIB/valid/ --epochs 1000 --scheduler StepLR --lr_step_size 200
+python src/test_model.py model-counting /home/arie/Documents/phd/code/NSNet/ModelCounting/SATLIB/test/ --checkpoint runs/mc_nsnet_satlib/checkpoints/model_best.pt 

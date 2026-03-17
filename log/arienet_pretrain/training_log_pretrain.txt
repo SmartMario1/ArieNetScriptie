@@ -1,0 +1,658 @@
+
+==================================================
+Training started: 2026-02-16 12:11:28
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 2, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+
+==================================================
+Training started: 2026-02-16 12:14:41
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 2, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+
+==================================================
+Training started: 2026-02-16 12:18:18
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 32, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+
+==================================================
+Training started: 2026-02-16 12:20:38
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 16, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+
+==================================================
+Training started: 2026-02-16 12:21:27
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 12, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+Train Loss: 0.6867 (took 86.2s)
+Train Confusion Matrix:
+[[18901 24943]
+ [17572 26809]]
+Val Loss: 0.6205 (took 76.4s)
+Recall: 1.0000, Precision: 0.4969, F1: 0.6639
+Validation Confusion Matrix:
+[[   0 8027]
+ [   0 7928]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 2/40
+Train Loss: 0.6867 (took 165.2s)
+Train Confusion Matrix:
+[[18942 24902]
+ [19300 25081]]
+Val Loss: 0.6206 (took 79.4s)
+Recall: 0.0000, Precision: 0.0000, F1: 0.0000
+Validation Confusion Matrix:
+[[8027    0]
+ [7928    0]]
+
+Epoch 3/40
+Train Loss: 0.6867 (took 169.0s)
+Train Confusion Matrix:
+[[23272 20572]
+ [23938 20443]]
+Val Loss: 0.6205 (took 77.3s)
+Recall: 0.8732, Precision: 0.4904, F1: 0.6281
+Validation Confusion Matrix:
+[[ 833 7194]
+ [1005 6923]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 4/40
+Train Loss: 0.6866 (took 173.7s)
+Train Confusion Matrix:
+[[20099 23745]
+ [21517 22864]]
+Val Loss: 0.6205 (took 78.7s)
+Recall: 0.8995, Precision: 0.4928, F1: 0.6368
+Validation Confusion Matrix:
+[[ 688 7339]
+ [ 797 7131]]
+
+Epoch 5/40
+Train Loss: 0.6866 (took 181.0s)
+Train Confusion Matrix:
+[[18125 25719]
+ [19561 24820]]
+Val Loss: 0.6205 (took 82.5s)
+Recall: 0.9202, Precision: 0.4914, F1: 0.6407
+Validation Confusion Matrix:
+[[ 477 7550]
+ [ 633 7295]]
+
+Epoch 6/40
+Train Loss: 0.6866 (took 169.1s)
+Train Confusion Matrix:
+[[21338 22506]
+ [22309 22072]]
+Val Loss: 0.6205 (took 78.6s)
+Recall: 0.7557, Precision: 0.4984, F1: 0.6006
+Validation Confusion Matrix:
+[[1997 6030]
+ [1937 5991]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 7/40
+Train Loss: 0.6866 (took 175.7s)
+Train Confusion Matrix:
+[[22518 21326]
+ [23413 20968]]
+Val Loss: 0.6205 (took 83.9s)
+Recall: 0.6509, Precision: 0.4938, F1: 0.5616
+Validation Confusion Matrix:
+[[2738 5289]
+ [2768 5160]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 8/40
+Train Loss: 0.6866 (took 144.1s)
+Train Confusion Matrix:
+[[23287 20557]
+ [23507 20874]]
+Val Loss: 0.6205 (took 76.6s)
+Recall: 0.5301, Precision: 0.5019, F1: 0.5156
+Validation Confusion Matrix:
+[[3855 4172]
+ [3725 4203]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 9/40
+Train Loss: 0.6866 (took 108.4s)
+Train Confusion Matrix:
+[[21846 21998]
+ [22094 22287]]
+Val Loss: 0.6205 (took 72.6s)
+Recall: 0.2784, Precision: 0.5247, F1: 0.3638
+Validation Confusion Matrix:
+[[6028 1999]
+ [5721 2207]]
+
+Epoch 10/40
+
+==================================================
+Training started: 2026-02-16 12:57:39
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 8, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+Train Loss: 262700364150.4166 (took 112.9s)
+Train Confusion Matrix:
+[[35132  8712]
+ [16257 28124]]
+Val Loss: 10903688782.8925 (took 65.2s)
+Recall: 0.1623, Precision: 0.5365, F1: 0.2492
+Validation Confusion Matrix:
+[[6915 1112]
+ [6641 1287]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 2/40
+Train Loss: 246232721975641022398464.0000 (took 115.2s)
+Train Confusion Matrix:
+[[37206  6638]
+ [36791  7590]]
+
+==================================================
+Training started: 2026-02-16 13:03:26
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 0.0001, 'epoch_num': 40, 'batch_size': 10, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+Train Loss: 540974675602059427840.0000 (took 89.2s)
+Train Confusion Matrix:
+[[35636  8208]
+ [27497 16884]]
+Val Loss: 4436396784381445799936.0000 (took 75.7s)
+Recall: 0.1408, Precision: 0.5068, F1: 0.2203
+Validation Confusion Matrix:
+[[6941 1086]
+ [6812 1116]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 2/40
+
+==================================================
+Training started: 2026-02-16 13:07:12
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 5e-05, 'epoch_num': 40, 'batch_size': 12, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+
+==================================================
+Training started: 2026-02-16 13:07:34
+Mode: pretrain
+Hyperparameters: {'pretrain': True, 'seed': 77, 'lr': 5e-05, 'epoch_num': 40, 'batch_size': 10, 'log_dir': './log/arienet_pretrain', 'checkpoint_path': None}
+==================================================
+
+
+Epoch 1/40
+Train Loss: 0.4920 (took 100.6s)
+Train Confusion Matrix:
+[[33567 10277]
+ [10342 34039]]
+Val Loss: 0.3618 (took 81.4s)
+Recall: 0.8104, Precision: 0.8047, F1: 0.8076
+Validation Confusion Matrix:
+[[6468 1559]
+ [1503 6425]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 2/40
+Train Loss: 0.3395 (took 88.9s)
+Train Confusion Matrix:
+[[37535  6309]
+ [ 6397 37984]]
+Val Loss: 0.2516 (took 77.7s)
+Recall: 0.8717, Precision: 0.8693, F1: 0.8705
+Validation Confusion Matrix:
+[[6988 1039]
+ [1017 6911]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 3/40
+Train Loss: 0.3336 (took 85.5s)
+Train Confusion Matrix:
+[[37673  6171]
+ [ 6219 38162]]
+Val Loss: 0.3573 (took 71.4s)
+Recall: 0.8219, Precision: 0.8130, F1: 0.8174
+Validation Confusion Matrix:
+[[6528 1499]
+ [1412 6516]]
+
+Epoch 4/40
+Train Loss: 0.3645 (took 85.8s)
+Train Confusion Matrix:
+[[37528  6316]
+ [ 6451 37930]]
+Val Loss: 0.2559 (took 64.7s)
+Recall: 0.8678, Precision: 0.8630, F1: 0.8654
+Validation Confusion Matrix:
+[[6935 1092]
+ [1048 6880]]
+
+Epoch 5/40
+Train Loss: 0.3334 (took 89.0s)
+Train Confusion Matrix:
+[[38011  5833]
+ [ 5918 38463]]
+Val Loss: 0.2331 (took 71.4s)
+Recall: 0.8780, Precision: 0.8721, F1: 0.8750
+Validation Confusion Matrix:
+[[7006 1021]
+ [ 967 6961]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 6/40
+Train Loss: 0.3196 (took 84.9s)
+Train Confusion Matrix:
+[[38372  5472]
+ [ 5630 38751]]
+Val Loss: 0.2491 (took 64.2s)
+Recall: 0.8739, Precision: 0.8738, F1: 0.8738
+Validation Confusion Matrix:
+[[7026 1001]
+ [1000 6928]]
+
+Epoch 7/40
+Train Loss: 0.3625 (took 85.3s)
+Train Confusion Matrix:
+[[37806  6038]
+ [ 6227 38154]]
+Val Loss: 0.4341 (took 73.8s)
+Recall: 0.8377, Precision: 0.8283, F1: 0.8329
+Validation Confusion Matrix:
+[[6650 1377]
+ [1287 6641]]
+
+Epoch 8/40
+Train Loss: 0.4020 (took 87.3s)
+Train Confusion Matrix:
+[[37143  6701]
+ [ 6768 37613]]
+Val Loss: 0.2889 (took 73.5s)
+Recall: 0.8570, Precision: 0.8511, F1: 0.8540
+Validation Confusion Matrix:
+[[6838 1189]
+ [1134 6794]]
+
+Epoch 9/40
+Train Loss: 0.3274 (took 85.5s)
+Train Confusion Matrix:
+[[38104  5740]
+ [ 5978 38403]]
+Val Loss: 0.2402 (took 67.3s)
+Recall: 0.8765, Precision: 0.8721, F1: 0.8743
+Validation Confusion Matrix:
+[[7008 1019]
+ [ 979 6949]]
+
+Epoch 10/40
+Train Loss: 0.3166 (took 87.2s)
+Train Confusion Matrix:
+[[38374  5470]
+ [ 5658 38723]]
+Val Loss: 0.2359 (took 64.8s)
+Recall: 0.8789, Precision: 0.8788, F1: 0.8789
+Validation Confusion Matrix:
+[[7066  961]
+ [ 960 6968]]
+
+Epoch 11/40
+Train Loss: 0.3365 (took 85.8s)
+Train Confusion Matrix:
+[[38281  5563]
+ [ 5839 38542]]
+Val Loss: 0.2647 (took 70.6s)
+Recall: 0.8736, Precision: 0.8728, F1: 0.8732
+Validation Confusion Matrix:
+[[7018 1009]
+ [1002 6926]]
+
+Epoch 12/40
+Train Loss: 0.3451 (took 88.0s)
+Train Confusion Matrix:
+[[37947  5897]
+ [ 5961 38420]]
+Val Loss: 0.2410 (took 65.0s)
+Recall: 0.8731, Precision: 0.8721, F1: 0.8726
+Validation Confusion Matrix:
+[[7012 1015]
+ [1006 6922]]
+
+Epoch 13/40
+Train Loss: 0.3299 (took 84.2s)
+Train Confusion Matrix:
+[[38128  5716]
+ [ 5804 38577]]
+Val Loss: 0.2396 (took 69.2s)
+Recall: 0.8771, Precision: 0.8721, F1: 0.8746
+Validation Confusion Matrix:
+[[7007 1020]
+ [ 974 6954]]
+
+Epoch 14/40
+Train Loss: 0.3648 (took 88.2s)
+Train Confusion Matrix:
+[[37823  6021]
+ [ 6082 38299]]
+Val Loss: 0.2414 (took 66.3s)
+Recall: 0.8750, Precision: 0.8742, F1: 0.8746
+Validation Confusion Matrix:
+[[7029  998]
+ [ 991 6937]]
+
+Epoch 15/40
+Train Loss: 0.3492 (took 85.5s)
+Train Confusion Matrix:
+[[38164  5680]
+ [ 5866 38515]]
+Val Loss: 0.2316 (took 69.0s)
+Recall: 0.8756, Precision: 0.8745, F1: 0.8751
+Validation Confusion Matrix:
+[[7031  996]
+ [ 986 6942]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 16/40
+Train Loss: 0.3008 (took 88.6s)
+Train Confusion Matrix:
+[[38509  5335]
+ [ 5492 38889]]
+Val Loss: 0.5709 (took 67.1s)
+Recall: 0.8402, Precision: 0.8315, F1: 0.8358
+Validation Confusion Matrix:
+[[6677 1350]
+ [1267 6661]]
+
+Epoch 17/40
+Train Loss: 0.4443 (took 84.9s)
+Train Confusion Matrix:
+[[37636  6208]
+ [ 6373 38008]]
+Val Loss: 0.2660 (took 65.9s)
+Recall: 0.8739, Precision: 0.8708, F1: 0.8723
+Validation Confusion Matrix:
+[[6999 1028]
+ [1000 6928]]
+
+Epoch 18/40
+Train Loss: 0.3035 (took 89.1s)
+Train Confusion Matrix:
+[[38667  5177]
+ [ 5340 39041]]
+Val Loss: 0.2815 (took 71.5s)
+Recall: 0.8589, Precision: 0.8534, F1: 0.8561
+Validation Confusion Matrix:
+[[6857 1170]
+ [1119 6809]]
+
+Epoch 19/40
+Train Loss: 0.3785 (took 87.2s)
+Train Confusion Matrix:
+[[38095  5749]
+ [ 6016 38365]]
+Val Loss: 0.4444 (took 70.3s)
+Recall: 0.8295, Precision: 0.8299, F1: 0.8297
+Validation Confusion Matrix:
+[[6679 1348]
+ [1352 6576]]
+
+Epoch 20/40
+Train Loss: 0.4861 (took 87.3s)
+Train Confusion Matrix:
+[[37286  6558]
+ [ 6675 37706]]
+Val Loss: 0.2462 (took 67.0s)
+Recall: 0.8711, Precision: 0.8712, F1: 0.8711
+Validation Confusion Matrix:
+[[7006 1021]
+ [1022 6906]]
+
+Epoch 21/40
+Train Loss: 0.3089 (took 87.5s)
+Train Confusion Matrix:
+[[38495  5349]
+ [ 5535 38846]]
+Val Loss: 0.2438 (took 65.7s)
+Recall: 0.8770, Precision: 0.8743, F1: 0.8756
+Validation Confusion Matrix:
+[[7027 1000]
+ [ 975 6953]]
+
+Epoch 22/40
+Train Loss: 0.3833 (took 88.0s)
+Train Confusion Matrix:
+[[38063  5781]
+ [ 5938 38443]]
+Val Loss: 0.4590 (took 78.3s)
+Recall: 0.8437, Precision: 0.8340, F1: 0.8389
+Validation Confusion Matrix:
+[[6696 1331]
+ [1239 6689]]
+
+Epoch 23/40
+Train Loss: 0.3180 (took 86.1s)
+Train Confusion Matrix:
+[[38303  5541]
+ [ 5651 38730]]
+Val Loss: 0.2360 (took 73.7s)
+Recall: 0.8780, Precision: 0.8752, F1: 0.8766
+Validation Confusion Matrix:
+[[7034  993]
+ [ 967 6961]]
+
+Epoch 24/40
+Train Loss: 0.3421 (took 83.8s)
+Train Confusion Matrix:
+[[38467  5377]
+ [ 5564 38817]]
+Val Loss: 0.4810 (took 83.4s)
+Recall: 0.7818, Precision: 0.7726, F1: 0.7772
+Validation Confusion Matrix:
+[[6203 1824]
+ [1730 6198]]
+
+Epoch 25/40
+Train Loss: 0.3732 (took 97.8s)
+Train Confusion Matrix:
+[[38058  5786]
+ [ 5964 38417]]
+Val Loss: 0.2283 (took 80.2s)
+Recall: 0.8814, Precision: 0.8771, F1: 0.8793
+Validation Confusion Matrix:
+[[7048  979]
+ [ 940 6988]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 26/40
+Train Loss: 0.3452 (took 101.1s)
+Train Confusion Matrix:
+[[38411  5433]
+ [ 5537 38844]]
+Val Loss: 0.2206 (took 77.3s)
+Recall: 0.8838, Precision: 0.8808, F1: 0.8823
+Validation Confusion Matrix:
+[[7079  948]
+ [ 921 7007]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 27/40
+Train Loss: 0.3281 (took 102.8s)
+Train Confusion Matrix:
+[[38073  5771]
+ [ 5986 38395]]
+Val Loss: 0.3303 (took 83.5s)
+Recall: 0.8673, Precision: 0.8680, F1: 0.8676
+Validation Confusion Matrix:
+[[6981 1046]
+ [1052 6876]]
+
+Epoch 28/40
+Train Loss: 0.3045 (took 105.7s)
+Train Confusion Matrix:
+[[38768  5076]
+ [ 5262 39119]]
+Val Loss: 0.2341 (took 81.4s)
+Recall: 0.8819, Precision: 0.8767, F1: 0.8793
+Validation Confusion Matrix:
+[[7044  983]
+ [ 936 6992]]
+
+Epoch 29/40
+Train Loss: 0.3055 (took 118.6s)
+Train Confusion Matrix:
+[[38736  5108]
+ [ 5292 39089]]
+Val Loss: 0.2343 (took 92.6s)
+Recall: 0.8847, Precision: 0.8820, F1: 0.8834
+Validation Confusion Matrix:
+[[7089  938]
+ [ 914 7014]]
+
+Epoch 30/40
+Train Loss: 0.4012 (took 129.7s)
+Train Confusion Matrix:
+[[38269  5575]
+ [ 5746 38635]]
+Val Loss: 0.5295 (took 102.7s)
+Recall: 0.8391, Precision: 0.8332, F1: 0.8361
+Validation Confusion Matrix:
+[[6695 1332]
+ [1276 6652]]
+
+Epoch 31/40
+Train Loss: 0.4232 (took 119.2s)
+Train Confusion Matrix:
+[[37748  6096]
+ [ 6207 38174]]
+Val Loss: 0.4147 (took 87.4s)
+Recall: 0.8604, Precision: 0.8528, F1: 0.8566
+Validation Confusion Matrix:
+[[6850 1177]
+ [1107 6821]]
+
+Epoch 32/40
+Train Loss: 0.3150 (took 108.0s)
+Train Confusion Matrix:
+[[38579  5265]
+ [ 5454 38927]]
+Val Loss: 0.2295 (took 79.4s)
+Recall: 0.8851, Precision: 0.8820, F1: 0.8835
+Validation Confusion Matrix:
+[[7088  939]
+ [ 911 7017]]
+
+Epoch 33/40
+Train Loss: 0.3538 (took 105.4s)
+Train Confusion Matrix:
+[[38479  5365]
+ [ 5545 38836]]
+Val Loss: 0.2283 (took 86.8s)
+Recall: 0.8814, Precision: 0.8790, F1: 0.8802
+Validation Confusion Matrix:
+[[7065  962]
+ [ 940 6988]]
+
+Epoch 34/40
+Train Loss: 0.3012 (took 111.4s)
+Train Confusion Matrix:
+[[38589  5255]
+ [ 5369 39012]]
+Val Loss: 0.2386 (took 87.8s)
+Recall: 0.8895, Precision: 0.8836, F1: 0.8865
+Validation Confusion Matrix:
+[[7098  929]
+ [ 876 7052]]
+
+Epoch 35/40
+Train Loss: 0.2854 (took 110.5s)
+Train Confusion Matrix:
+[[38836  5008]
+ [ 5193 39188]]
+Val Loss: 0.2268 (took 82.9s)
+Recall: 0.8789, Precision: 0.8734, F1: 0.8761
+Validation Confusion Matrix:
+[[7017 1010]
+ [ 960 6968]]
+
+Epoch 36/40
+Train Loss: 0.2824 (took 102.6s)
+Train Confusion Matrix:
+[[38880  4964]
+ [ 5221 39160]]
+Val Loss: 0.2307 (took 81.5s)
+Recall: 0.8841, Precision: 0.8801, F1: 0.8821
+Validation Confusion Matrix:
+[[7072  955]
+ [ 919 7009]]
+
+Epoch 37/40
+Train Loss: 0.2808 (took 96.5s)
+Train Confusion Matrix:
+[[38898  4946]
+ [ 5156 39225]]
+Val Loss: 0.2137 (took 92.8s)
+Recall: 0.8896, Precision: 0.8852, F1: 0.8874
+Validation Confusion Matrix:
+[[7112  915]
+ [ 875 7053]]
+Saved best model to ./models/arienet_backbone/pretrain-best.pt
+
+Epoch 38/40
+Train Loss: 0.3470 (took 103.6s)
+Train Confusion Matrix:
+[[38322  5522]
+ [ 5659 38722]]
+Val Loss: 0.3122 (took 79.2s)
+Recall: 0.8674, Precision: 0.8713, F1: 0.8694
+Validation Confusion Matrix:
+[[7011 1016]
+ [1051 6877]]
+
+Epoch 39/40
+Train Loss: 0.2851 (took 105.0s)
+Train Confusion Matrix:
+[[38847  4997]
+ [ 5287 39094]]
+Val Loss: 0.2232 (took 72.7s)
+Recall: 0.8895, Precision: 0.8818, F1: 0.8857
+Validation Confusion Matrix:
+[[7082  945]
+ [ 876 7052]]
+
+Epoch 40/40
+Train Loss: 0.3100 (took 98.8s)
+Train Confusion Matrix:
+[[38651  5193]
+ [ 5349 39032]]
+Val Loss: 0.3311 (took 85.2s)
+Recall: 0.8399, Precision: 0.8306, F1: 0.8352
+Validation Confusion Matrix:
+[[6669 1358]
+ [1269 6659]]
