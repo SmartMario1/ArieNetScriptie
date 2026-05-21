@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --gpus=1
 #SBATCH --mem=60G
-#SBATCH -t 72:00:00
+#SBATCH -t 24:00:00
 #SBATCH --output=slurm_rlaf_3col_%j.out
 #SBATCH --error=slurm_rlaf_3col_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -96,7 +96,8 @@ python train_arienet_rlaf.py \
     optim.weight_decay=0.0 \
     scale_sigma=0.1 \
     val_interval=5 \
-    seed=0 \
+    ckpt_interval=100 \
+    seed=42 \
     wandb.project=nsnet-rlaf \
     wandb.name=ArieNet_3col_noCOOC
 
