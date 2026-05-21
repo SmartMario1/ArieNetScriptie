@@ -34,7 +34,8 @@ class NeighborhoodFeatureNet(nn.Module):
         return scatter_sum(data.l2c_assignment_indices, l2c_edges_feat[data.l2c_assignment_neighborhoods], len(data.l2c_msg_receiver_indices), self.opts.device)
 
     def max_l2c_satisfying_assignments(self, data, l2c_msgs_per_assignment):
-        return scatter_logsumexp(data.l2c_msg_receiver_indices, l2c_msgs_per_assignment, data.n_edges, self.opts.device)
+        result = scatter_logsumexp(data.l2c_msg_receiver_indices, l2c_msgs_per_assignment, data.n_edges, self.opts.device)
+        return torch.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
     
     def forward(self, data):
         n_edges = data.n_edges
@@ -115,7 +116,8 @@ class MatrixNet(nn.Module):
 
     def max_l2c_satisfying_assignments(self, data, l2c_msgs_per_assignment):
         edge_indices, assignment_indices = split_ind_2_src_matrix(data.edge_to_clause_assignment_matrix)
-        return scatter_logsumexp(edge_indices, l2c_msgs_per_assignment[assignment_indices], data.n_edges, self.opts.device)
+        result = scatter_logsumexp(edge_indices, l2c_msgs_per_assignment[assignment_indices], data.n_edges, self.opts.device)
+        return torch.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
 
 
     def forward(self, data):
@@ -184,6 +186,7 @@ class ArieNet(nn.Module):
         """
         super(ArieNet, self).__init__()
         self.opts = opts
+        self.no_precomputed_local_sat = getattr(self.opts, 'no_precomputed_local_sat', False)
         self.c2l_edges_init = nn.Parameter(torch.randn(1, self.opts.dim))
         self.l2c_edges_init = nn.Parameter(torch.randn(1, self.opts.dim))
         self.denom = math.sqrt(self.opts.dim)
@@ -205,7 +208,8 @@ class ArieNet(nn.Module):
         return scatter_sum(data.l2c_assignment_indices, l2c_edges_feat[data.l2c_assignment_neighborhoods], len(data.l2c_msg_receiver_indices), self.opts.device)
 
     def max_l2c_satisfying_assignments(self, data, l2c_msgs_per_assignment):
-        return scatter_logsumexp(data.l2c_msg_receiver_indices, l2c_msgs_per_assignment, len(torch.unique(data.l2c_msg_receiver_indices)), self.opts.device)
+        result = scatter_logsumexp(data.l2c_msg_receiver_indices, l2c_msgs_per_assignment, data.n_edges, self.opts.device)
+        return torch.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
 
     def forward(self, data):        
         n_edges = data.n_edges
@@ -225,8 +229,15 @@ class ArieNet(nn.Module):
             # A1
             l2c_msg = self.l2c_msg_update(l2c_msg_argument)
 
-            # Should be 2D, N x 1
-            local_satisfaction_percentages = data.local_satisfaction_percentage_per_edge.unsqueeze(1)
+            local_satisfaction_raw = getattr(data, 'local_satisfaction_percentage_per_edge', None)
+            if self.no_precomputed_local_sat or local_satisfaction_raw is None:
+                local_satisfaction_percentages = torch.zeros(
+                    (n_edges, 1), dtype=l2c_msg.dtype, device=l2c_msg.device
+                )
+            elif local_satisfaction_raw.dim() == 1:
+                local_satisfaction_percentages = local_satisfaction_raw.unsqueeze(1)
+            else:
+                local_satisfaction_percentages = local_satisfaction_raw
 
             # For the l->c features and the sat percentages, we swap the + and - occurrences
             # this relies on the - to always be right next to the +, which is not so nice.
@@ -288,9 +299,12 @@ class ArieNetCooc(ArieNet):
         l2c_edges_feat = (self.l2c_edges_init / self.denom).repeat(n_edges, 1)
 
         # Co-occurrence edge features, one per directed literal pair.
-        n_cooc = len(data.cooc_src_indices) if data.cooc_src_indices is not None else 0
+        cooc_src = getattr(data, 'cooc_src_indices', None)
+        n_cooc = len(cooc_src) if cooc_src is not None else 0
         if n_cooc > 0:
             cooc_feats = (self.cooc_edges_init / self.denom).repeat(n_cooc, 1)
+        else:
+            print("Warning: no co-occurrence edges found in data; running ArieNetCooc as ArieNet")
         n_literals_total = data.n_literals.sum().item()
 
         for _ in range(self.opts.n_rounds):
@@ -299,7 +313,15 @@ class ArieNetCooc(ArieNet):
             l2c_msg_argument = self.sum_c2l_by_literal_occurence(data, c2l_edges_feat)
             l2c_msg = self.l2c_msg_update(l2c_msg_argument)
 
-            local_satisfaction_percentages = data.local_satisfaction_percentage_per_edge.unsqueeze(1)
+            local_satisfaction_raw = getattr(data, 'local_satisfaction_percentage_per_edge', None)
+            if self.no_precomputed_local_sat or local_satisfaction_raw is None:
+                local_satisfaction_percentages = torch.zeros(
+                    (n_edges, 1), dtype=l2c_msg.dtype, device=l2c_msg.device
+                )
+            elif local_satisfaction_raw.dim() == 1:
+                local_satisfaction_percentages = local_satisfaction_raw.unsqueeze(1)
+            else:
+                local_satisfaction_percentages = local_satisfaction_raw
             negated_local_satisfaction_percentages = swap_even_odd(local_satisfaction_percentages)
             l2c_negated_msg = swap_even_odd(l2c_msg)
 
@@ -314,7 +336,8 @@ class ArieNetCooc(ArieNet):
             # Each literal aggregates its co-occurring neighbours' edge features;
             # the result is injected into that literal's incident c2l edge features.
             if n_cooc > 0:
-                cooc_agg = scatter_sum(data.cooc_dst_indices, cooc_feats, n_literals_total, self.opts.device)
+                cooc_dst = getattr(data, 'cooc_dst_indices', None)
+                cooc_agg = scatter_sum(cooc_dst, cooc_feats, n_literals_total, self.opts.device)
                 c2l_edges_feat = c2l_edges_feat + self.l2l_update(cooc_agg[data.literal_indices_per_edge])
 
         l_features = scatter_sum(data.literal_indices_per_edge, c2l_edges_feat, n_literals_total, self.opts.device)

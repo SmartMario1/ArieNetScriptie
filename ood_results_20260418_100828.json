@@ -1,0 +1,287 @@
+{
+  "timestamp": "2026-04-18T10:08:27.402699",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "BackboneCanonical",
+    "ArieNetCooc",
+    "ArieNetCooc_Mix",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "BackboneCanonical": "models/arienet_backbone_canonical/best_model.pt",
+    "ArieNetCooc": "models/arienet_cooc_new/best_model.pt",
+    "ArieNetCooc_Mix": "models/arienet_cooc_multi/best_model.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n350": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7304.588,
+        "avg_time": 0.7739734,
+        "bucket_wall_time": 444.35
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7159.296,
+        "avg_time": 0.7741895999999999,
+        "bucket_wall_time": 438.83
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11105.13,
+        "avg_time": 1.2528154,
+        "bucket_wall_time": 699.47
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13267.218,
+        "avg_time": 1.478155,
+        "bucket_wall_time": 747.12
+      }
+    },
+    "n360": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 8442.39,
+        "avg_time": 0.9140418,
+        "bucket_wall_time": 502.59
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 8572.708,
+        "avg_time": 0.9092972,
+        "bucket_wall_time": 503.49
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14167.558,
+        "avg_time": 1.4586080000000001,
+        "bucket_wall_time": 774.26
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13861.548,
+        "avg_time": 1.4257950000000001,
+        "bucket_wall_time": 720.24
+      }
+    },
+    "n370": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10268.936,
+        "avg_time": 1.0989232000000002,
+        "bucket_wall_time": 595.69
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 9802.772,
+        "avg_time": 1.0486204000000001,
+        "bucket_wall_time": 569.29
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 16781.064,
+        "avg_time": 1.8072318,
+        "bucket_wall_time": 946.93
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13553.9,
+        "avg_time": 1.5238429999999998,
+        "bucket_wall_time": 769.97
+      }
+    },
+    "n380": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11665.048,
+        "avg_time": 1.4513676,
+        "bucket_wall_time": 823.73
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11084.384,
+        "avg_time": 1.3656266000000001,
+        "bucket_wall_time": 779.36
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 19488.704,
+        "avg_time": 2.2921118000000003,
+        "bucket_wall_time": 1233.96
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.894,
+        "avg_time": 1.7983848,
+        "bucket_wall_time": 907.81
+      }
+    },
+    "n390": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10531.876,
+        "avg_time": 1.2645929999999999,
+        "bucket_wall_time": 1368.0
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 9388.22,
+        "avg_time": 1.1161542,
+        "bucket_wall_time": 1268.71
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 23323.14,
+        "avg_time": 2.7538556,
+        "bucket_wall_time": 1425.73
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13971.142,
+        "avg_time": 1.7575657999999998,
+        "bucket_wall_time": 887.59
+      }
+    },
+    "n400": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 18141.214,
+        "avg_time": 2.2402433999999998,
+        "bucket_wall_time": 1942.15
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14930.144,
+        "avg_time": 1.7813094,
+        "bucket_wall_time": 1613.75
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 28556.002,
+        "avg_time": 3.3824495999999997,
+        "bucket_wall_time": 1739.12
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 15600.312,
+        "avg_time": 1.8685057999999999,
+        "bucket_wall_time": 942.56
+      }
+    },
+    "n410": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 21271.668,
+        "avg_time": 2.684121,
+        "bucket_wall_time": 2107.09
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 20087.356,
+        "avg_time": 2.5440772000000003,
+        "bucket_wall_time": 2019.55
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 41103.684,
+        "avg_time": 5.3160984000000004,
+        "bucket_wall_time": 2721.9
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.614,
+        "avg_time": 1.9216081999999999,
+        "bucket_wall_time": 969.84
+      }
+    }
+  }
+}

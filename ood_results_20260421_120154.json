@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-04-21T12:01:53.515107",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "Backbone",
+    "BackboneUP",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "Backbone": "models/arienet_backbone/pretrain-no_lsp_backbone-best.pt",
+    "BackboneUP": "models/arienet_backbone/pretrain-up_features-best.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n350": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7211.708,
+        "avg_time": 0.7776996,
+        "bucket_wall_time": 443.49
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 6970.12,
+        "avg_time": 0.7521094,
+        "bucket_wall_time": 429.66
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13267.218,
+        "avg_time": 1.4056438,
+        "bucket_wall_time": 710.33
+      }
+    },
+    "n360": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 8727.246,
+        "avg_time": 0.9586569999999999,
+        "bucket_wall_time": 533.8
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7922.588,
+        "avg_time": 0.8409714,
+        "bucket_wall_time": 1278.62
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13861.548,
+        "avg_time": 1.4786322,
+        "bucket_wall_time": 747.03
+      }
+    },
+    "n370": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10126.238,
+        "avg_time": 1.1533408,
+        "bucket_wall_time": 630.67
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 9558.874,
+        "avg_time": 1.0347892,
+        "bucket_wall_time": 1349.84
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13553.9,
+        "avg_time": 1.4859014,
+        "bucket_wall_time": 750.82
+      }
+    },
+    "n380": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11799.198,
+        "avg_time": 1.3532608,
+        "bucket_wall_time": 729.41
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11306.202,
+        "avg_time": 1.2935356000000002,
+        "bucket_wall_time": 1518.77
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.894,
+        "avg_time": 1.7005154,
+        "bucket_wall_time": 858.29
+      }
+    },
+    "n390": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10389.236,
+        "avg_time": 1.2199259999999998,
+        "bucket_wall_time": 663.1
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10267.474,
+        "avg_time": 1.2078578000000002,
+        "bucket_wall_time": 1507.3
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13971.142,
+        "avg_time": 1.6350134,
+        "bucket_wall_time": 825.71
+      }
+    },
+    "n400": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 15733.842,
+        "avg_time": 1.9002450000000002,
+        "bucket_wall_time": 1003.33
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 15458.352,
+        "avg_time": 1.8680816,
+        "bucket_wall_time": 1866.04
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 15600.312,
+        "avg_time": 1.8809690000000001,
+        "bucket_wall_time": 948.92
+      }
+    },
+    "n410": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 20883.878,
+        "avg_time": 2.5375964000000004,
+        "bucket_wall_time": 1330.42
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 19785.808,
+        "avg_time": 2.3871358,
+        "bucket_wall_time": 2127.35
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.614,
+        "avg_time": 1.8040832,
+        "bucket_wall_time": 910.32
+      }
+    }
+  }
+}

@@ -659,7 +659,161 @@ def cnf_to_lcg_cooccurrence(n_vars: int, clauses: List[List[int]]) -> nx.Graph:
 
 
 # ---------------------------------------------------------------------------
-# 5. WLIG – Weighted Literal-Incidence Graph
+# 5. LCG + Clause Splitting via Dummy Variables (BFC-targeted)
+# ---------------------------------------------------------------------------
+
+def cnf_to_lcg_clause_split(
+    n_vars: int,
+    clauses: List[List[int]],
+    n_splits: int = 10,
+    seed: int = 0,
+) -> nx.Graph:
+    """LCG with BFC-targeted clause splitting via dummy variables.
+
+    Approach
+    --------
+    1. Build the standard LCG.
+    2. Compute the Balanced Forman Curvature (BFC) for every edge.
+    3. Rank all literal–clause edges by BFC (most negative first).
+    4. For each of the ``n_splits`` most negatively curved edges whose clause
+       has not yet been split, split that clause by introducing a fresh dummy
+       variable ``z``.  The original clause ``(l₁ ∨ … ∨lₖ)`` is replaced by
+       two logically equivalent copies::
+
+           (l₁ ∨ … ∨ lₖ ∨  z)   →  cls_<j>_a
+           (l₁ ∨ … ∨ lₖ ∨ ¬z)   →  cls_<j>_b
+
+       Both new clause nodes inherit **all** original literal–clause edges.
+       A polarity bridge ``lit_z_pos – lit_z_neg`` is added for the dummy
+       variable, which is standard in the LCG encoding.
+
+    Why this reduces oversquashing
+    --------------------------------
+    The two new clause nodes ``cls_j_a`` and ``cls_j_b`` share every original
+    literal neighbour, while each is exclusively connected to one polarity of
+    the dummy variable.  Together with the polarity bridge they create new
+    short cycles through the previously bottlenecked literal–clause edge,
+    increasing its BFC and reducing the information bottleneck identified by
+    Topping et al. (2022).
+
+    Logical equivalence
+    -------------------
+    ``(C ∨ z) ∧ (C ∨ ¬z)`` is a tautology when z is a fresh variable, so
+    when intersected with the rest of the formula the two clauses together
+    are satisfiable iff the original clause ``C`` is satisfiable.  No
+    spurious constraints are introduced.
+
+    Parameters
+    ----------
+    n_vars : int
+        Number of variables in the original CNF formula.
+    clauses : list of lists of signed ints (DIMACS)
+        Clause list of the original formula.
+    n_splits : int
+        Maximum number of clause splits to perform.  Each split targets the
+        literal–clause edge with the most negative BFC whose clause has not
+        yet been processed.
+    seed : int
+        Unused; reserved for future stochastic variants.
+
+    Returns
+    -------
+    nx.Graph
+        LCG with split clauses.  Original ``cls_<j>`` nodes are **replaced**
+        by ``cls_<j>_a`` and ``cls_<j>_b`` for each split clause; unsplit
+        clauses retain their ``cls_<j>`` name.  Dummy literal nodes are named
+        ``lit_dummy_<d>_pos`` and ``lit_dummy_<d>_neg`` for split index ``d``.
+    """
+    G = cnf_to_lcg(n_vars, clauses)
+
+    if n_splits <= 0:
+        return G
+
+    # ------------------------------------------------------------------
+    # Step 1: Compute BFC for every edge using the full adjacency dict.
+    # ------------------------------------------------------------------
+    adj: dict[str, set] = {v: set(G.neighbors(v)) for v in G.nodes()}
+
+    def _key(a: str, b: str) -> tuple:
+        return (a, b) if a < b else (b, a)
+
+    edge_bfc: dict[tuple, float] = {
+        _key(u, v): _bfc_general(u, v, adj)
+        for u, v in G.edges()
+    }
+
+    # ------------------------------------------------------------------
+    # Step 2: Rank literal–clause edges by BFC (most negative first).
+    # ------------------------------------------------------------------
+    lit_cls_edges: list[tuple[tuple, float]] = []
+    for (a, b), bfc_val in edge_bfc.items():
+        a_is_lit = a.startswith("lit_") and not a.startswith("lit_dummy")
+        b_is_lit = b.startswith("lit_") and not b.startswith("lit_dummy")
+        a_is_cls = a.startswith("cls_")
+        b_is_cls = b.startswith("cls_")
+        if (a_is_lit and b_is_cls) or (a_is_cls and b_is_lit):
+            lit_cls_edges.append(((a, b), bfc_val))
+
+    lit_cls_edges.sort(key=lambda x: x[1])  # ascending = most negative first
+
+    # ------------------------------------------------------------------
+    # Step 3: Split up to n_splits unique clauses.
+    # ------------------------------------------------------------------
+    split_clauses: set[str] = set()
+    dummy_index = 0
+    # Map original clause node name → (clause_a_name, clause_b_name)
+    split_map: dict[str, tuple[str, str]] = {}
+
+    for (a, b), _ in lit_cls_edges:
+        if dummy_index >= n_splits:
+            break
+
+        # Identify which endpoint is the clause node.
+        cls_node = a if a.startswith("cls_") else b
+
+        if cls_node in split_clauses:
+            continue  # already split this clause
+
+        # ------------------------------------------------------------------
+        # Perform the split.
+        # ------------------------------------------------------------------
+        original_lits = list(adj[cls_node])  # all literal neighbours
+
+        cls_a = f"{cls_node}_a"
+        cls_b = f"{cls_node}_b"
+        lit_pos = f"lit_dummy_{dummy_index}_pos"
+        lit_neg = f"lit_dummy_{dummy_index}_neg"
+
+        # Add the two replacement clause nodes.
+        G.add_node(cls_a, kind="clause_split_a", original=cls_node)
+        G.add_node(cls_b, kind="clause_split_b", original=cls_node)
+
+        # Add dummy variable literal nodes + polarity bridge.
+        G.add_node(lit_pos, kind="dummy_pos_literal", var=f"dummy_{dummy_index}")
+        G.add_node(lit_neg, kind="dummy_neg_literal", var=f"dummy_{dummy_index}")
+        G.add_edge(lit_pos, lit_neg, kind="polarity")
+
+        # Connect both clause copies to all original literals.
+        for lit_node in original_lits:
+            G.add_edge(lit_node, cls_a)
+            G.add_edge(lit_node, cls_b)
+
+        # Connect each clause copy to one polarity of the dummy variable.
+        G.add_edge(lit_pos, cls_a)
+        G.add_edge(lit_neg, cls_b)
+
+        # Remove the original clause node (it has been replaced by _a and _b).
+        G.remove_node(cls_node)
+
+        split_clauses.add(cls_node)
+        split_map[cls_node] = (cls_a, cls_b)
+        dummy_index += 1
+
+    return G
+
+
+# ---------------------------------------------------------------------------
+# 6. WLIG – Weighted Literal-Incidence Graph
 # ---------------------------------------------------------------------------
 
 def cnf_to_wlig(n_vars: int, clauses: List[List[int]]) -> nx.Graph:

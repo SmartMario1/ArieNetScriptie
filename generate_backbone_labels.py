@@ -30,8 +30,7 @@ def compute_backbone_pysat(cnf_path, timeout=30):
         success: bool indicating if computation succeeded
     """
     try:
-        from pysat.solvers import Solver
-        from pysat.formula import CNF
+        from pysat.solvers import Cadical
     except ImportError:
         print("[ERROR] PySAT not installed. Install with: pip install python-sat")
         return None, False
@@ -44,7 +43,7 @@ def compute_backbone_pysat(cnf_path, timeout=30):
             return {}, True
         
         # Check if satisfiable first
-        with Solver(name='cadical', bootstrap_with=clauses) as solver:
+        with Cadical(bootstrap_with=clauses) as solver:
             if not solver.solve():
                 # UNSAT - no backbone
                 return None, False
@@ -54,7 +53,7 @@ def compute_backbone_pysat(cnf_path, timeout=30):
         
         for var in range(1, n_vars + 1):
             # Test if var=True is forced
-            with Solver(name='cadical', bootstrap_with=clauses) as solver:
+            with Cadical(bootstrap_with=clauses) as solver:
                 # Add constraint: var must be False
                 solver.add_clause([-var])
                 if not solver.solve():
@@ -63,7 +62,7 @@ def compute_backbone_pysat(cnf_path, timeout=30):
                     continue
             
             # Test if var=False is forced
-            with Solver(name='cadical', bootstrap_with=clauses) as solver:
+            with Cadical(bootstrap_with=clauses) as solver:
                 # Add constraint: var must be True
                 solver.add_clause([var])
                 if not solver.solve():
@@ -138,16 +137,10 @@ def compute_backbone_external_solver(cnf_path, timeout=30):
 
 def process_single_file(args):
     """Process a single CNF file and return its backbone."""
-    cnf_path, use_pysat, timeout = args
-    
-    if use_pysat:
-        backbone, success = compute_backbone_pysat(cnf_path, timeout)
-    else:
-        backbone, success = compute_backbone_external_solver(cnf_path, timeout)
-    
+    cnf_path, timeout = args
+    backbone, success = compute_backbone_pysat(cnf_path, timeout)
     if not success:
         return cnf_path, None
-    
     return cnf_path, backbone
 
 
@@ -157,7 +150,6 @@ def main():
     parser.add_argument('--out_dir', type=str, default=None, help='Output directory (default: same as data_dir)')
     parser.add_argument('--n_process', type=int, default=4, help='Number of parallel processes')
     parser.add_argument('--timeout', type=int, default=30, help='Timeout per file in seconds')
-    parser.add_argument('--use_pysat', action='store_true', help='Use PySAT library (default: try PySAT first)')
     
     args = parser.parse_args()
     
@@ -174,21 +166,13 @@ def main():
     # Determine output directory
     out_dir = args.out_dir if args.out_dir else args.data_dir
     os.makedirs(out_dir, exist_ok=True)
-    
-    # Check if PySAT is available
-    use_pysat = args.use_pysat
-    if use_pysat:
-        try:
-            import pysat
-            print("Using PySAT for backbone computation")
-        except ImportError:
-            print("[WARNING] PySAT not available, falling back to external solver")
-            use_pysat = False
-    
+
+    print("Using PySAT (Cadical) for backbone computation")
+
     # Process files in parallel
     print(f'Computing backbone for {len(all_files)} files using {args.n_process} processes...')
     
-    task_args = [(f, use_pysat, args.timeout) for f in all_files]
+    task_args = [(f, args.timeout) for f in all_files]
     
     backbones = {}
     failed_files = []

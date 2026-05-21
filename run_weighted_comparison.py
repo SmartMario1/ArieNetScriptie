@@ -91,6 +91,10 @@ def main():
                        help='Path to Backbone checkpoint (optional)')
     parser.add_argument('--backbone_canonical_checkpoint', type=str, default=None,
                        help='Path to Backbone with Canonical Subgraph Features checkpoint (optional)')
+    parser.add_argument('--wlig_checkpoint', type=str, default=None,
+                       help='Path to BackboneWLIG checkpoint (optional)')
+    parser.add_argument('--cooc_checkpoint', type=str, default=None,
+                       help='Path to ArieNetCooc checkpoint (optional)')
     parser.add_argument('--solver', type=str, choices=['glucose', 'march'], default='glucose',
                        help='Solver to use')
     parser.add_argument('--timeout', type=int, default=5000,
@@ -135,7 +139,23 @@ def main():
             ('BackboneCanonical', args.backbone_canonical_checkpoint, False, False),  # Backbone Canonical constant weight
             ('BackboneCanonical', args.backbone_canonical_checkpoint, False, True),   # Backbone Canonical random guidance
         ])
-    
+
+    # Add WLIG backbone experiments if checkpoint provided
+    if args.wlig_checkpoint:
+        experiments.extend([
+            ('BackboneWLIG', args.wlig_checkpoint, True, False),   # BackboneWLIG with weights
+            ('BackboneWLIG', args.wlig_checkpoint, False, False),  # BackboneWLIG constant weight
+            ('BackboneWLIG', args.wlig_checkpoint, False, True),   # BackboneWLIG random guidance
+        ])
+
+    # Add ArieNetCooc experiments if checkpoint provided
+    if args.cooc_checkpoint:
+        experiments.extend([
+            ('ArieNetCooc', args.cooc_checkpoint, True, False),   # ArieNetCooc with weights
+            ('ArieNetCooc', args.cooc_checkpoint, False, False),  # ArieNetCooc constant weight
+            ('ArieNetCooc', args.cooc_checkpoint, False, True),   # ArieNetCooc random guidance
+        ])
+
     # Add ArieNet experiments
     experiments.extend([
         ('ArieNet', args.arienet_checkpoint, True, False),   # ArieNet with weights
@@ -158,6 +178,8 @@ def main():
         'batch_size': args.batch_size,
         'num_workers': args.num_workers,
         'pin_memory': not args.no_pin_memory,
+        'wlig_checkpoint': args.wlig_checkpoint,
+        'cooc_checkpoint': args.cooc_checkpoint,
         'experiments': []
     }
     
@@ -177,6 +199,10 @@ def main():
         print(f"Backbone checkpoint: {args.backbone_checkpoint}")
     if args.backbone_canonical_checkpoint:
         print(f"Backbone Canonical checkpoint: {args.backbone_canonical_checkpoint}")
+    if args.wlig_checkpoint:
+        print(f"BackboneWLIG checkpoint: {args.wlig_checkpoint}")
+    if args.cooc_checkpoint:
+        print(f"ArieNetCooc checkpoint: {args.cooc_checkpoint}")
     print(f"Total experiments: {len(experiments)}")
     print("="*80)
     

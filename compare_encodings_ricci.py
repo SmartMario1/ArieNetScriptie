@@ -66,6 +66,7 @@ from graph_encodings import (
     cnf_to_lcg, cnf_to_vcg, cnf_to_vcg_bfc_augmented,
     cnf_to_lcg_bfc_augmented, cnf_to_lcg_clause_bridge,
     cnf_to_lcg_cooccurrence, cnf_to_wlig,
+    cnf_to_lcg_clause_split,
 )
 
 try:
@@ -134,7 +135,22 @@ _CURVATURE_ATTR = {
 }
 
 
-def _compute_curvature(G, curvature: str, alpha: float):
+def _omega_star(mean_ric: float, var_ric: float, clause_density: float) -> float:
+    """Skenderi (2025) hardness heuristic ω*(G).
+
+    ω(G)  = -E[Ric] * E[α]       (negated mean curvature * clause density)
+    ω*(G) = ω(G) / Var[Ric]      (normalised by curvature variance)
+
+    Higher ω* → harder for a GNN-based solver.
+    Returns NaN when variance is zero (perfectly uniform curvature).
+    """
+    omega = (-mean_ric) * clause_density
+    if var_ric == 0.0:
+        return float("nan")
+    return omega / var_ric
+
+
+def _compute_curvature(G, curvature: str, alpha: float, clause_density: float = 0.0):
     """Run the requested curvature computation and return stats dict."""
     stats: Dict[str, Any] = {}
     if curvature in ("orc", "both"):
@@ -142,11 +158,21 @@ def _compute_curvature(G, curvature: str, alpha: float):
         s = ricci_curvature_stats(result, attr="ricciCurvature")
         for k, v in s.items():
             stats[f"orc_{k}"] = v
+        stats["orc_omega_star"] = _omega_star(
+            mean_ric=stats.get("orc_mean", float("nan")),
+            var_ric=stats.get("orc_std", 0.0) ** 2,
+            clause_density=clause_density,
+        )
     if curvature in ("bfc", "both"):
         result = compute_balanced_forman(G)
         s = ricci_curvature_stats(result, attr="bfc")
         for k, v in s.items():
             stats[f"bfc_{k}"] = v
+        stats["bfc_omega_star"] = _omega_star(
+            mean_ric=stats.get("bfc_mean", float("nan")),
+            var_ric=stats.get("bfc_std", 0.0) ** 2,
+            clause_density=clause_density,
+        )
     return stats
 
 
@@ -164,6 +190,8 @@ def process_file(path: str, alpha: float, curvature: str) -> Dict[str, Any]:
             "n_clauses": len(clauses),
         }
 
+        clause_density = len(clauses) / n_vars if n_vars > 0 else 0.0
+
         for enc_name, builder in _BUILDERS.items():
             G = builder(n_vars, clauses)
 
@@ -175,7 +203,7 @@ def process_file(path: str, alpha: float, curvature: str) -> Dict[str, Any]:
                 }
                 continue
 
-            stats = _compute_curvature(G, curvature, alpha)
+            stats = _compute_curvature(G, curvature, alpha, clause_density=clause_density)
             stats["n_nodes"] = G.number_of_nodes()
             stats["n_edges"] = G.number_of_edges()
 
@@ -260,6 +288,7 @@ def print_comparison_table(agg: Dict[str, Any], n_ok: int, curvature: str) -> No
             f"{'curv:std':>{col_w}}",
             f"{'curv:min':>{col_w}}",
             f"{'curv:max':>{col_w}}",
+            f"{'omega*':>{col_w}}",
             f"{'n_nodes':>{col_w}}",
             f"{'n_edges':>{col_w}}",
             f"{'wt:mean':>{col_w}}",
@@ -290,12 +319,13 @@ def print_comparison_table(agg: Dict[str, Any], n_ok: int, curvature: str) -> No
 
             parts = [
                 f"{enc:<8}",
-                _fmt(m("mean"),   col_w),
-                _fmt(m("std"),    col_w),
-                _fmt(m("min"),    col_w),
-                _fmt(m("max"),    col_w),
-                _fmt(mn("n_nodes"), col_w, 1),
-                _fmt(mn("n_edges"), col_w, 1),
+                _fmt(m("mean"),        col_w),
+                _fmt(m("std"),         col_w),
+                _fmt(m("min"),         col_w),
+                _fmt(m("max"),         col_w),
+                _fmt(m("omega_star"),   col_w),
+                _fmt(mn("n_nodes"),     col_w, 1),
+                _fmt(mn("n_edges"),     col_w, 1),
                 _fmt(mn("mean_edge_weight"), col_w, 3),
             ]
             print("  ".join(parts))
@@ -305,7 +335,7 @@ def print_comparison_table(agg: Dict[str, Any], n_ok: int, curvature: str) -> No
         enc_header = "  ".join(f"{enc:>12}" for enc in ENCODINGS)
         print(f"  {'':8}  {'stat':>8}  {enc_header}")
         print(f"  {'':-<8}  {'':-<8}  " + "  ".join(f"{'':-<12}" for _ in ENCODINGS))
-        for stat_key in ("mean", "std", "min", "max", "median"):
+        for stat_key in ("mean", "std", "min", "max", "median", "omega_star"):
             vals = {
                 enc: agg.get(enc, {}).get(f"{prefix}_{stat_key}", {}).get("mean", float("nan"))
                 for enc in ENCODINGS
@@ -322,8 +352,8 @@ def print_comparison_table(agg: Dict[str, Any], n_ok: int, curvature: str) -> No
 # ---------------------------------------------------------------------------
 
 _CSV_SCALAR_KEYS = (
-    "orc_mean", "orc_std", "orc_min", "orc_max", "orc_median",
-    "bfc_mean", "bfc_std", "bfc_min", "bfc_max", "bfc_median",
+    "orc_mean", "orc_std", "orc_min", "orc_max", "orc_median", "orc_omega_star",
+    "bfc_mean", "bfc_std", "bfc_min", "bfc_max", "bfc_median", "bfc_omega_star",
     "n_nodes", "n_edges", "mean_edge_weight",
 )
 
@@ -411,12 +441,23 @@ def main() -> None:
             "(the actual NSNet encoding), e.g. '20,100,200'."
         ),
     )
+    parser.add_argument(
+        "--lcg_split_budgets",
+        default="",
+        help=(
+            "Comma-separated split counts for clause-split LCG encoding, "
+            "e.g. '5,10,20'.  Each value n_splits targets the n most negatively "
+            "curved literal-clause edges and splits their clauses via a dummy variable."
+        ),
+    )
     args = parser.parse_args()
 
     vcg_budgets = _parse_int_csv(args.vcg_aux_edge_budgets)
     vcg_budgets = sorted(set(b for b in vcg_budgets if b >= 0))
     lcg_budgets = _parse_int_csv(args.lcg_aux_edge_budgets)
     lcg_budgets = sorted(set(b for b in lcg_budgets if b >= 0))
+    split_budgets = _parse_int_csv(args.lcg_split_budgets)
+    split_budgets = sorted(set(b for b in split_budgets if b >= 0))
 
     _BUILDERS = dict(_BASE_BUILDERS)
     for b in vcg_budgets:
@@ -425,6 +466,9 @@ def main() -> None:
     for b in lcg_budgets:
         label = f"LCG_AUX_e{b}"
         _BUILDERS[label] = (lambda n_vars, clauses, b=b: cnf_to_lcg_bfc_augmented(n_vars, clauses, n_iterations=b))
+    for b in split_budgets:
+        label = f"LCG_SPLIT_s{b}"
+        _BUILDERS[label] = (lambda n_vars, clauses, b=b: cnf_to_lcg_clause_split(n_vars, clauses, n_splits=b))
 
     ENCODINGS = list(_BUILDERS.keys())
 
@@ -435,6 +479,8 @@ def main() -> None:
         print(f"VCG auxiliary-edge budgets: {vcg_budgets}")
     if lcg_budgets:
         print(f"LCG auxiliary-edge budgets: {lcg_budgets}")
+    if split_budgets:
+        print(f"LCG clause-split budgets: {split_budgets}")
 
     results: List[Dict] = []
     iterable = tqdm(files, desc="Encoding + Curvature") if _HAS_TQDM else files

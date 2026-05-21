@@ -400,33 +400,75 @@ def main():
     elif opts.model == 'BackboneCanonical':
         from train_arienet_backbone import ArieNetBackbone
         models['BackboneCanonical'] = ArieNetBackbone
-    
+    elif opts.model == 'BackboneWLIG':
+        from train_arienet_backbone_wlig import ArieNetWLIGBackbone
+        models['BackboneWLIG'] = ArieNetWLIGBackbone
+    elif opts.model == 'ArieNetCooc':
+        from src.nsnet.models.arienet import ArieNetCooc
+        models['ArieNetCooc'] = ArieNetCooc
+
     # Handle different model initialization
     if opts.model in ['Backbone', 'BackboneCanonical']:
         # Backbone model doesn't use opts for initialization
         use_subgraph = (opts.model == 'BackboneCanonical')
         model = models[opts.model](device=opts.device, use_subgraph_features=use_subgraph, subgraph_dim=32)
         model.to(opts.device)
-        
+
         print(f'Loading model checkpoint from {opts.checkpoint}...')
         if opts.device.type == 'cpu':
             checkpoint = torch.load(opts.checkpoint, map_location='cpu')
         else:
             checkpoint = torch.load(opts.checkpoint)
-        
+
         model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+        model.eval()
+    elif opts.model == 'BackboneWLIG':
+        print(f'Loading model checkpoint from {opts.checkpoint}...')
+        if opts.device.type == 'cpu':
+            checkpoint = torch.load(opts.checkpoint, map_location='cpu')
+        else:
+            checkpoint = torch.load(opts.checkpoint)
+        ckpt_args = checkpoint['args']  # dict saved with vars(args)
+        model = models['BackboneWLIG'](
+            dim=ckpt_args.get('dim', 128),
+            n_rounds=ckpt_args.get('n_rounds', 16),
+            n_mlp_layers=ckpt_args.get('n_mlp_layers', 3),
+            activation=ckpt_args.get('activation', 'relu'),
+        )
+        model.to(opts.device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
+    elif opts.model == 'ArieNetCooc':
+        print(f'Loading model checkpoint from {opts.checkpoint}...')
+        if opts.device.type == 'cpu':
+            checkpoint = torch.load(opts.checkpoint, map_location='cpu')
+        else:
+            checkpoint = torch.load(opts.checkpoint)
+        ckpt_args = checkpoint['args']  # argparse Namespace from training
+        import argparse as _argparse
+        cooc_opts = _argparse.Namespace(
+            dim=ckpt_args.dim,
+            n_rounds=ckpt_args.n_rounds,
+            n_mlp_layers=ckpt_args.n_mlp_layers,
+            activation='relu',
+            device=opts.device,
+            task='satisfiability',
+        )
+        model = models['ArieNetCooc'](cooc_opts)
+        model.to(opts.device)
+        model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
     else:
         # Standard models use opts
         model = models[opts.model](opts)
         model.to(opts.device)
-        
+
         print(f'Loading model checkpoint from {opts.checkpoint}...')
         if opts.device.type == 'cpu':
             checkpoint = torch.load(opts.checkpoint, map_location='cpu')
         else:
             checkpoint = torch.load(opts.checkpoint)
-        
+
         model.load_state_dict(checkpoint['state_dict'], strict=False)
         model.eval()
     
@@ -439,7 +481,19 @@ def main():
         else:
             from train_arienet_backbone import BackboneBPGDataset
             test_dataset = BackboneBPGDataset(opts.test_dir)
-        test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=False, 
+        test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=False,
+                                num_workers=opts.num_workers, pin_memory=opts.pin_memory)
+        all_files = test_dataset.cnf_files
+    elif opts.model == 'BackboneWLIG':
+        from train_arienet_backbone_wlig import BackboneWLIGDataset
+        test_dataset = BackboneWLIGDataset(opts.test_dir)
+        test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=False,
+                                num_workers=opts.num_workers, pin_memory=opts.pin_memory)
+        all_files = test_dataset.cnf_files
+    elif opts.model == 'ArieNetCooc':
+        from train_arienet_cooc import CoocBPGDataset
+        test_dataset = CoocBPGDataset(opts.test_dir)
+        test_loader = DataLoader(test_dataset, batch_size=opts.batch_size, shuffle=False,
                                 num_workers=opts.num_workers, pin_memory=opts.pin_memory)
         all_files = test_dataset.cnf_files
     else:
@@ -469,16 +523,32 @@ def main():
     for data in test_loader:
         data = data.to(opts.device)
         with torch.no_grad():
-            if opts.model in ['Backbone', 'BackboneCanonical']:
-                # Backbone model outputs raw logits, need to apply softmax
+            if opts.model in ['Backbone', 'BackboneCanonical', 'BackboneWLIG']:
+                # These models output raw logits, need to apply softmax
                 v_logits = model(data)  # [total_vars_in_batch, 2]
                 v_probs = F.softmax(v_logits, dim=1)
             else:
                 v_probs = model(data)  # [total_vars_in_batch, 2]
-            
+
             # Get the number of variables per graph in the batch
             if opts.model in ['Backbone', 'BackboneCanonical']:
                 # Backbone model uses BPG format with n_literals
+                if isinstance(data.n_literals, torch.Tensor):
+                    v_sizes = (data.n_literals / 2).int().tolist()
+                elif isinstance(data.n_literals, list):
+                    v_sizes = [int(n / 2) for n in data.n_literals]
+                else:
+                    v_sizes = [int(data.n_literals / 2)]
+            elif opts.model == 'BackboneWLIG':
+                # WLIG data stores n_vars directly
+                if isinstance(data.n_vars, torch.Tensor):
+                    v_sizes = data.n_vars.tolist()
+                elif isinstance(data.n_vars, list):
+                    v_sizes = [int(n) for n in data.n_vars]
+                else:
+                    v_sizes = [int(data.n_vars)]
+            elif opts.model == 'ArieNetCooc':
+                # ArieNetCooc uses BPG format with n_literals
                 if isinstance(data.n_literals, torch.Tensor):
                     v_sizes = (data.n_literals / 2).int().tolist()
                 elif isinstance(data.n_literals, list):

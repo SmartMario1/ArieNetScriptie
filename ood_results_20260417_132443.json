@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-04-17T13:24:42.988975",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "BackboneCanonical",
+    "ArieNetCooc",
+    "ArieNetCooc_Mix",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "BackboneCanonical": "models/arienet_backbone_canonical/best_model.pt",
+    "ArieNetCooc": "models/arienet_cooc_new/best_model.pt",
+    "ArieNetCooc_Mix": "models/arienet_cooc_multi/best_model.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n350": {
+      "BackboneCanonical": {
+        "error": "evaluation failed"
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7159.296,
+        "avg_time": 0.7447039999999999,
+        "bucket_wall_time": 572.09
+      },
+      "ArieNetCooc_Mix": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11105.13,
+        "avg_time": 1.1378748,
+        "bucket_wall_time": 618.01
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13267.218,
+        "avg_time": 1.3390118000000002,
+        "bucket_wall_time": 676.69
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{"time":"2026-05-05T15:51:54.742289426+02:00","level":"INFO","msg":"stream: starting","core version":"0.24.2"}
+{"time":"2026-05-05T15:51:54.949650824+02:00","level":"WARN","msg":"featurechecker: GraphQL client is nil, skipping feature loading"}
+{"time":"2026-05-05T15:51:54.949728424+02:00","level":"INFO","msg":"stream: created new stream","id":"fzwfs4ge"}
+{"time":"2026-05-05T15:51:54.949796924+02:00","level":"INFO","msg":"handler: started","stream_id":"fzwfs4ge"}
+{"time":"2026-05-05T15:51:54.950015824+02:00","level":"INFO","msg":"stream: started","id":"fzwfs4ge"}
+{"time":"2026-05-05T15:51:54.950130124+02:00","level":"INFO","msg":"writer: started","stream_id":"fzwfs4ge"}
+{"time":"2026-05-05T15:51:54.950148424+02:00","level":"INFO","msg":"sender: started","stream_id":"fzwfs4ge"}
+{"time":"2026-05-05T15:51:54.951937824+02:00","level":"WARN","msg":"runupserter: server does not expand metric globs but the x_server_side_expand_glob_metrics setting is set; ignoring"}
+{"time":"2026-05-05T15:54:28.546308761+02:00","level":"INFO","msg":"stream: closing","id":"fzwfs4ge"}
+{"time":"2026-05-05T15:54:28.546686961+02:00","level":"INFO","msg":"handler: closed","stream_id":"fzwfs4ge"}
+{"time":"2026-05-05T15:54:28.546739861+02:00","level":"INFO","msg":"sender: closed","stream_id":"fzwfs4ge"}
+{"time":"2026-05-05T15:54:28.546752461+02:00","level":"INFO","msg":"stream: closed","id":"fzwfs4ge"}

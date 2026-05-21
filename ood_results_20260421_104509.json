@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-04-21T10:45:08.916575",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "Backbone",
+    "BackboneUP",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "Backbone": "models/arienet_backbone/pretrain-no_lsp_backbone-best.pt",
+    "BackboneUP": "models/arienet_backbone/pretrain-up_features-best.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n350": {
+      "Backbone": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7211.708,
+        "avg_time": 0.7600636,
+        "bucket_wall_time": 430.73
+      },
+      "BackboneUP": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 6970.12,
+        "avg_time": 0.721662,
+        "bucket_wall_time": 404.11
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13267.218,
+        "avg_time": 1.3698272000000002,
+        "bucket_wall_time": 692.11
+      }
+    }
+  }
+}

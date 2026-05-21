@@ -1,0 +1,164 @@
+{
+  "timestamp": "2026-05-05T11:13:15.285307",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size_small",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "RLAF",
+    "RLAF_dpo",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "RLAF": "runs/ArieNetRLAF_3SAT/last.pt",
+    "RLAF_dpo": "runs/medium/last.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n150": {
+      "RLAF": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 46.855,
+        "avg_time": 0.011503000000000001,
+        "bucket_wall_time": 110.93
+      },
+      "RLAF_dpo": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 45.135,
+        "avg_time": 0.0114905,
+        "bucket_wall_time": 16.45
+      },
+      "MarchUnmodified": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 39.315,
+        "avg_time": 0.010816500000000001,
+        "bucket_wall_time": 3.31
+      }
+    },
+    "n200": {
+      "RLAF": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 191.085,
+        "avg_time": 0.022807499999999998,
+        "bucket_wall_time": 144.04
+      },
+      "RLAF_dpo": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 188.595,
+        "avg_time": 0.021652500000000005,
+        "bucket_wall_time": 19.41
+      },
+      "MarchUnmodified": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 142.245,
+        "avg_time": 0.018247,
+        "bucket_wall_time": 4.79
+      }
+    },
+    "n250": {
+      "RLAF": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 918.99,
+        "avg_time": 0.0810235,
+        "bucket_wall_time": 187.13
+      },
+      "RLAF_dpo": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 804.185,
+        "avg_time": 0.074062,
+        "bucket_wall_time": 28.17
+      },
+      "MarchUnmodified": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 664.595,
+        "avg_time": 0.061984,
+        "bucket_wall_time": 13.58
+      }
+    },
+    "n300": {
+      "RLAF": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 4224.945,
+        "avg_time": 0.37986850000000005,
+        "bucket_wall_time": 276.91
+      },
+      "RLAF_dpo": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 3778.105,
+        "avg_time": 0.3396515,
+        "bucket_wall_time": 82.46
+      },
+      "MarchUnmodified": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 3343.15,
+        "avg_time": 0.304749,
+        "bucket_wall_time": 62.13
+      }
+    },
+    "n350": {
+      "RLAF": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 19325.055,
+        "avg_time": 1.9996050000000003,
+        "bucket_wall_time": 644.77
+      },
+      "RLAF_dpo": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 17798.015,
+        "avg_time": 1.8462405000000002,
+        "bucket_wall_time": 385.37
+      },
+      "MarchUnmodified": {
+        "total_problems": 200,
+        "num_solved": 200,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13472.545,
+        "avg_time": 1.347601,
+        "bucket_wall_time": 270.7
+      }
+    }
+  }
+}

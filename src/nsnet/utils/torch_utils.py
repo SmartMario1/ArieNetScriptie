@@ -20,7 +20,7 @@ def scatter_sum(indices, src, n_output, device):
     assert len(indices) == len(src), "Index list and source list must have the same size"
 
     # make a matrix of 'number of output features' to 'feature dimension'
-    res = zero_tensor((n_output, src.size(1)), device=device)
+    res = torch.zeros((n_output, src.size(1)), dtype=src.dtype, device=device)
     dim_to_sum = 0
 
     indices = indices_to_2d(indices, src.size(1))
@@ -29,21 +29,27 @@ def scatter_sum(indices, src, n_output, device):
 def scatter_logsumexp(indices, src, n_output, device):
     assert len(indices) == len(src), "Index list and source list must have the same size"
 
-    # Get the 'max' vector for each output group, to subtract
-    unique_indices = torch.unique(indices)
-    max_vecs = torch.full((len(unique_indices), src.size(1)), float('-inf'), device=device)
-
+    # Get the max vector per output group for numerical stability.
+    # Use n_output rows so that output indices not present in `indices` stay -inf.
+    max_vecs = torch.full((n_output, src.size(1)), float('-inf'), dtype=src.dtype, device=device)
     indices_2d = indices_to_2d(indices, src.size(1))
     max_vecs = max_vecs.scatter_reduce(0, indices_2d, src, reduce="amax")
 
-    # Subtract the max vector for each group from all elements in that group
-    shifted_src = src - max_vecs[indices]
-    res = zero_tensor((n_output, src.size(1)), device=device)
+    # For output rows with no inputs (max == -inf), replace with 0 so that
+    # exp(-inf - 0) = 0 and we don't propagate NaN through the subtraction.
+    max_vecs_clamped = max_vecs.clone()
+    max_vecs_clamped[max_vecs == float('-inf')] = 0.0
 
-    # LogSumExp, both res and max_vecs have one vector per output group
-    res =  torch.log(res.scatter_reduce(0, indices_2d, torch.exp(shifted_src), reduce="sum"))
-    # pdb.set_trace()
-    return res + max_vecs
+    # Subtract the per-group max before summing (numerically stable logsumexp)
+    shifted_src = src - max_vecs_clamped[indices]
+    res = torch.zeros((n_output, src.size(1)), dtype=src.dtype, device=device)
+    exp_shifted = torch.exp(shifted_src.float()).to(src.dtype)
+
+    # Sum exp(shifted), take log, add back the max.
+    # Output rows with no inputs remain 0 after scatter_reduce, giving log(0) = -inf,
+    # and adding max_vecs_clamped[row]=0 keeps them at -inf.
+    res = torch.log(res.scatter_reduce(0, indices_2d, exp_shifted, reduce="sum"))
+    return res + max_vecs_clamped
 
 def swap_even_odd(tensor):
     indices = torch.arange(tensor.size(0))

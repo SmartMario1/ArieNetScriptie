@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-03-31T12:40:09.724481",
+  "ood_dir": "/home/sander/Thesis2/nsnet/SATSolving/3-sat/ood_size",
+  "timeout": 300,
+  "consecutive_timeout_limit": 5,
+  "seed": 1,
+  "models": [
+    "BackboneCanonical",
+    "ArieNetCooc",
+    "MarchUnmodified"
+  ],
+  "checkpoints": {
+    "BackboneCanonical": "models/arienet_backbone_canonical/best_model.pt",
+    "ArieNetCooc": "models/arienet_cooc/best_model.pt",
+    "MarchUnmodified": "(no checkpoint)"
+  },
+  "sizes": {
+    "n350": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 7265.798,
+        "avg_time": 0.7427994,
+        "bucket_wall_time": 974.91
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 6634.628,
+        "avg_time": 0.6856266000000001,
+        "bucket_wall_time": 545.12
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13267.218,
+        "avg_time": 1.3407692,
+        "bucket_wall_time": 677.21
+      }
+    },
+    "n360": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 8443.448,
+        "avg_time": 0.9144859999999999,
+        "bucket_wall_time": 1071.3
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 8768.184,
+        "avg_time": 0.9141132,
+        "bucket_wall_time": 647.86
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13861.548,
+        "avg_time": 1.4262169999999998,
+        "bucket_wall_time": 720.04
+      }
+    },
+    "n370": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10238.336,
+        "avg_time": 1.0920494,
+        "bucket_wall_time": 1168.59
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 9589.014,
+        "avg_time": 1.0245237999999999,
+        "bucket_wall_time": 707.38
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13553.9,
+        "avg_time": 1.4354754,
+        "bucket_wall_time": 724.85
+      }
+    },
+    "n380": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11715.154,
+        "avg_time": 1.278702,
+        "bucket_wall_time": 1280.58
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 11249.356,
+        "avg_time": 1.2315699999999998,
+        "bucket_wall_time": 815.53
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.894,
+        "avg_time": 1.6250354000000002,
+        "bucket_wall_time": 819.75
+      }
+    },
+    "n390": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10425.94,
+        "avg_time": 1.1722082,
+        "bucket_wall_time": 1244.56
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 10355.256,
+        "avg_time": 1.1632791999999998,
+        "bucket_wall_time": 785.9
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 13971.142,
+        "avg_time": 1.5606156,
+        "bucket_wall_time": 787.69
+      }
+    },
+    "n400": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 18062.802,
+        "avg_time": 2.0759212,
+        "bucket_wall_time": 1722.02
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 16464.054,
+        "avg_time": 1.8919036,
+        "bucket_wall_time": 1158.48
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 15600.312,
+        "avg_time": 1.7905191999999999,
+        "bucket_wall_time": 902.88
+      }
+    },
+    "n410": {
+      "BackboneCanonical": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 21254.706,
+        "avg_time": 2.5051192,
+        "bucket_wall_time": 1942.68
+      },
+      "ArieNetCooc": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 20176.294,
+        "avg_time": 2.3935492,
+        "bucket_wall_time": 1411.61
+      },
+      "MarchUnmodified": {
+        "total_problems": 500,
+        "num_solved": 500,
+        "num_timed_out": 0,
+        "num_skipped": 0,
+        "avg_decisions": 14955.614,
+        "avg_time": 1.8261788,
+        "bucket_wall_time": 921.24
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{"time":"2026-05-05T14:06:22.35811102+02:00","level":"INFO","msg":"stream: starting","core version":"0.24.2"}
+{"time":"2026-05-05T14:06:22.57636022+02:00","level":"WARN","msg":"featurechecker: GraphQL client is nil, skipping feature loading"}
+{"time":"2026-05-05T14:06:22.57653612+02:00","level":"INFO","msg":"stream: created new stream","id":"sbnwbpca"}
+{"time":"2026-05-05T14:06:22.57670962+02:00","level":"INFO","msg":"handler: started","stream_id":"sbnwbpca"}
+{"time":"2026-05-05T14:06:22.57684592+02:00","level":"INFO","msg":"stream: started","id":"sbnwbpca"}
+{"time":"2026-05-05T14:06:22.57696302+02:00","level":"INFO","msg":"writer: started","stream_id":"sbnwbpca"}
+{"time":"2026-05-05T14:06:22.57698472+02:00","level":"INFO","msg":"sender: started","stream_id":"sbnwbpca"}
+{"time":"2026-05-05T14:06:22.57820552+02:00","level":"WARN","msg":"runupserter: server does not expand metric globs but the x_server_side_expand_glob_metrics setting is set; ignoring"}
+{"time":"2026-05-05T15:49:54.878173466+02:00","level":"INFO","msg":"stream: closing","id":"sbnwbpca"}
+{"time":"2026-05-05T15:49:54.890112566+02:00","level":"INFO","msg":"handler: closed","stream_id":"sbnwbpca"}
+{"time":"2026-05-05T15:49:54.891467166+02:00","level":"INFO","msg":"sender: closed","stream_id":"sbnwbpca"}
+{"time":"2026-05-05T15:49:54.891520966+02:00","level":"INFO","msg":"stream: closed","id":"sbnwbpca"}

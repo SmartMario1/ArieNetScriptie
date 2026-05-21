@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from nsnet.utils.utils import literal2l_idx, parse_cnf_file
 from torch_geometric.data import Data, Dataset
+from tqdm import tqdm
 
 
 class LCG(Data):
@@ -99,6 +100,10 @@ class BPGParams(NamedTuple):
     l2c_msg_receiver_indices: torch.Tensor
     l2c_assignment_indices: torch.Tensor
     l2c_assignment_neighborhoods: torch.Tensor
+
+    # Per-literal UP features, shape (2*n_vars, 4); None when not computed.
+    # Column layout: [up_reach_pct, forced_count_pct, conflict_flag, log_up_reach]
+    up_features_per_literal: torch.Tensor = None
 
 
 class MatrixBPG(Data):
@@ -370,10 +375,18 @@ class BPG(Data):
         l2c_msg_receiver_indices=None,
         l2c_assignment_indices=None,
         l2c_assignment_neighborhoods=None,
-        
+
+        # Per-literal UP features, shape (2*n_vars, 4); None when not computed.
+        # Columns: [up_reach_pct, forced_count_pct, conflict_flag, log_up_reach]
+        up_features_per_literal=None,
+
         # Canonical subgraph features
         subgraphs_p1=None,  # List of EdgeSubgraph objects for p=1
         subgraphs_p0=None,  # List of EdgeSubgraph objects for p=0
+
+        # Literal co-occurrence edges (L2L)
+        cooc_src_indices=None,
+        cooc_dst_indices=None,
     ):
         super().__init__()
 
@@ -393,10 +406,17 @@ class BPG(Data):
         self.l2c_msg_receiver_indices = l2c_msg_receiver_indices
         self.l2c_assignment_indices = l2c_assignment_indices
         self.l2c_assignment_neighborhoods = l2c_assignment_neighborhoods
-        
+
+        # Per-literal UP features
+        self.up_features_per_literal = up_features_per_literal
+
         # Canonical subgraph features
         self.subgraphs_p1 = subgraphs_p1
         self.subgraphs_p0 = subgraphs_p0
+
+        # Literal co-occurrence edges (L2L)
+        self.cooc_src_indices = cooc_src_indices
+        self.cooc_dst_indices = cooc_dst_indices
 
 
     @property
@@ -412,7 +432,9 @@ class BPG(Data):
         if key == "clause_indices_per_occurence":
             return self.n_clauses
         
-        elif key == "local_satisfaction_percentage_per_edge":
+        elif key in ("local_satisfaction_percentage_per_edge",
+                      "up_features_per_literal"):
+            # Feature tensors: values are not indices, do not increment.
             return 0
 
         # Add the number of literals
@@ -427,8 +449,376 @@ class BPG(Data):
         # Add the number of assignments
         elif key == "l2c_assignment_indices":
             return len(self.l2c_msg_receiver_indices)
+
+        # Literal co-occurrence edges index literals
+        elif key in ["cooc_src_indices", "cooc_dst_indices"]:
+            return self.n_literals
         else:
             return super().__inc__(key, value, *args, **kwargs)
+
+
+def _compute_c2l_inputs_fast(
+    clauses: typing.List[typing.List[int]],
+    n_vars: int,
+    show_progress: bool = False,
+) -> typing.Tuple[torch.Tensor, torch.Tensor]:
+    """Vectorized c2l message-input computation.
+
+    For each BPG edge (variable v, clause c, sign s), the c2l message input
+    lists every other edge that shares the same (variable, sign) — i.e. the
+    literal neighbourhood.  The original implementation loops over all edges
+    individually and traverses Python objects; here we build the result with
+    numpy grouping, cutting the outer loop from n_edges (~100 k) to n_vars
+    (~500) iterations.
+
+    Edge indices follow the same convention as BPGParamBuilder:
+      + edge for the k-th literal occurrence = index 2k
+      − edge for the k-th literal occurrence = index 2k+1
+    """
+    n_occ = sum(len(c) for c in clauses)
+    edge_vars = np.empty(n_occ, dtype=np.int64)
+    k = 0
+    for clause in clauses:
+        for lit in clause:
+            edge_vars[k] = abs(lit) - 1
+            k += 1
+
+    occ_idx = np.arange(n_occ, dtype=np.int64)
+    recv_parts: typing.List[np.ndarray] = []
+    send_parts: typing.List[np.ndarray] = []
+
+    for v in tqdm(range(n_vars), desc="c2l", disable=not show_progress, leave=False):
+        occ_of_v = occ_idx[edge_vars == v]
+        n = len(occ_of_v)
+        if n <= 1:
+            continue
+        for sign_offset in (0, 1):          # 0 → + edges, 1 → − edges
+            edge_idxs = 2 * occ_of_v + sign_offset
+            # All ordered non-self pairs via repeat / tile
+            recv = np.repeat(edge_idxs, n)
+            send = np.tile(edge_idxs, n)
+            mask = recv != send
+            recv_parts.append(recv[mask])
+            send_parts.append(send[mask])
+
+    if recv_parts:
+        receivers = np.concatenate(recv_parts)
+        senders   = np.concatenate(send_parts)
+    else:
+        receivers = np.array([], dtype=np.int64)
+        senders   = np.array([], dtype=np.int64)
+
+    return torch.from_numpy(receivers), torch.from_numpy(senders)
+
+
+def _compute_l2c_inputs_fast(
+    clauses: typing.List[typing.List[int]],
+    show_progress: bool = False,
+) -> typing.Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Vectorized l2c satisfying-assignment-sum-input computation.
+
+    For each BPG edge (v, c, s) this enumerates all satisfying assignments of
+    the other literals in clause c and records the corresponding edge indices.
+
+    Key differences from the original Python-object implementation:
+    * `itertools.product` is called **once per clause** (not once per edge)
+      by working in the full 2^k assignment space.
+    * Assignment enumeration and clause-satisfaction checks are numpy ops.
+    * Output lists are built with np.repeat / np.where rather than Python
+      per-assignment loops, then concatenated once at the end.
+
+    For clauses longer than 20 literals (2^20 = 1 M rows) random sampling
+    is used instead of exhaustive enumeration.
+    """
+    MAX_K_EXACT = 20
+
+    edge_idx_parts:  typing.List[np.ndarray] = []
+    asgn_idx_parts:  typing.List[np.ndarray] = []
+    neigh_parts:     typing.List[np.ndarray] = []
+    assignment_counter = 0
+    clause_start = 0          # absolute edge-index offset for the current clause
+
+    for clause in tqdm(clauses, desc="l2c", disable=not show_progress, leave=False):
+        k = len(clause)
+        lit_signs = np.array([l > 0 for l in clause], dtype=bool)  # (k,)
+        pos_arr   = np.arange(k, dtype=np.int64)
+        edge_plus  = clause_start + 2 * pos_arr        # + edge index per position
+        edge_minus = edge_plus + 1                      # − edge index per position
+
+        # ---- generate all 2^k full assignments (or sample for very long clauses) ----
+        if k <= MAX_K_EXACT:
+            n_asgn   = 1 << k
+            all_asgn = (
+                (np.arange(n_asgn, dtype=np.int32)[:, None]
+                 >> np.arange(k - 1, -1, -1)[None, :]) & 1
+            ).astype(bool)                              # (2^k, k)
+        else:
+            n_asgn   = 1024
+            all_asgn = np.random.randint(0, 2, size=(n_asgn, k)).astype(bool)
+
+        # Which full assignments satisfy the clause?
+        clause_sat = (all_asgn == lit_signs[np.newaxis, :]).any(axis=1)  # (n_asgn,)
+
+        for pos in range(k):
+            # Indices and edge-indices for the other positions
+            other_pos  = np.concatenate([pos_arr[:pos], pos_arr[pos + 1:]])
+            ep_other   = edge_plus[other_pos]    # (k-1,) + edges for other positions
+            em_other   = edge_minus[other_pos]   # (k-1,) − edges
+
+            for s_bool, e_idx in ((True, int(edge_plus[pos])), (False, int(edge_minus[pos]))):
+                # Rows where this position is set to s_bool AND the clause is satisfied
+                sat_rows = np.where((all_asgn[:, pos] == s_bool) & clause_sat)[0]
+                n_sat = len(sat_rows)
+                if n_sat == 0:
+                    continue
+
+                # Neighbourhood edge indices: (n_sat, k-1)
+                sat_other  = all_asgn[np.ix_(sat_rows, other_pos)]
+                neigh_edges = np.where(sat_other, ep_other, em_other).astype(np.int64)
+
+                n_neigh   = k - 1
+                asgn_nums = np.arange(
+                    assignment_counter, assignment_counter + n_sat, dtype=np.int64
+                )
+                edge_idx_parts.append(np.full(n_sat, e_idx, dtype=np.int64))
+                asgn_idx_parts.append(np.repeat(asgn_nums, n_neigh))
+                neigh_parts.append(neigh_edges.ravel())
+                assignment_counter += n_sat
+
+        clause_start += 2 * k
+
+    def _concat(parts: typing.List[np.ndarray]) -> torch.Tensor:
+        arr = np.concatenate(parts) if parts else np.array([], dtype=np.int64)
+        return torch.from_numpy(arr)
+
+    return _concat(edge_idx_parts), _concat(asgn_idx_parts), _concat(neigh_parts)
+
+
+def _compute_all_local_sat_percentages(
+    clauses: typing.List[typing.List[int]],
+    n_vars: int,
+    n_samples: int = 500,
+    show_progress: bool = False,
+    _approx_threshold: int = 10_000,
+) -> np.ndarray:
+    """Compute local satisfaction percentages for all BPG edges.
+
+    Uses the exact per-occurrence code path with memoization on
+    (v, shared_clause_indices).  The approximate per-variable path is
+    retained below but intentionally never activated: it has a systematic
+    downward bias (empirical mean ≈ 0.062 vs exact ≈ 0.151, RMSE ≈ 0.155,
+    Pearson r ≈ 0.89) because it evaluates satisfaction over ALL clauses
+    containing v rather than only the shared k2-neighbourhood clauses.
+    It may be worth revisiting with a better neighbourhood approximation.
+
+    Returns float32 array of length 2 * sum(len(c) for c in clauses),
+    ordered identically to BPGParamBuilder.edges:
+      index 2*k   → + edge (v assigned True)
+      index 2*k+1 → − edge (v assigned False)
+    """
+    n_occ = sum(len(c) for c in clauses)
+    use_approx = False  # DISABLED: approximate path has unacceptable accuracy
+
+    # Build var → clause-index adjacency (needed by both paths)
+    var_to_clause_set: typing.List[set] = [set() for _ in range(n_vars)]
+    for ci, clause in enumerate(clauses):
+        for lit in clause:
+            v = abs(lit) - 1
+            if v < n_vars:
+                var_to_clause_set[v].add(ci)
+
+    # ------------------------------------------------------------------
+    # APPROXIMATE PATH (DISABLED — inaccurate, kept for future reference)
+    #
+    # Computes one value per variable over ALL clauses containing v, rather
+    # than the correct per-occurrence k2-neighbourhood subset.  This causes
+    # a systematic downward bias because it enforces a stricter (larger)
+    # shared-clause set than the exact definition.
+    #
+    # Empirical accuracy on crypto/hitag2 instances (n=5):
+    #   MAE=0.089, RMSE=0.155, Pearson r=0.89, approx mean=0.062 vs exact mean=0.151
+    #
+    # To re-enable: change `use_approx = False` above to
+    #   use_approx = n_occ > _approx_threshold
+    # and investigate whether a tighter neighbourhood approximation
+    # (e.g. only clauses sharing ≥2 variables with c) improves accuracy.
+    # ------------------------------------------------------------------
+    if use_approx:
+        local_sat_pos = np.ones(n_vars, dtype=np.float32)
+        local_sat_neg = np.ones(n_vars, dtype=np.float32)
+
+        for v in tqdm(range(n_vars), desc="local_sat", disable=not show_progress, leave=False):
+            v_clause_idxs = sorted(var_to_clause_set[v])
+            if not v_clause_idxs:
+                continue
+
+            other_vars_set: set = set()
+            for ci in v_clause_idxs:
+                for lit in clauses[ci]:
+                    other_vars_set.add(abs(lit) - 1)
+            other_vars_set.discard(v)
+            other_vars_list = sorted(other_vars_set)
+            n_other = len(other_vars_list)
+            var_to_col = {w: j for j, w in enumerate(other_vars_list)}
+
+            n_vc = len(v_clause_idxs)
+            if n_other == 0:
+                assignments = np.empty((1, 0), dtype=bool)
+            elif (1 << n_other) <= n_samples:
+                assignments = (
+                    (np.arange(1 << n_other)[:, None] >> np.arange(n_other - 1, -1, -1)[None, :]) & 1
+                ).astype(bool)
+            else:
+                assignments = np.random.randint(0, 2, size=(n_samples, n_other), dtype=np.uint8).view(bool)
+
+            n_asgn = assignments.shape[0]
+            pos_mask = np.zeros((n_vc, n_other), dtype=bool)
+            neg_mask = np.zeros((n_vc, n_other), dtype=bool)
+            v_pos_arr = np.zeros(n_vc, dtype=bool)
+            v_neg_arr = np.zeros(n_vc, dtype=bool)
+            for i, ci in enumerate(v_clause_idxs):
+                for lit in clauses[ci]:
+                    w = abs(lit) - 1
+                    if w == v:
+                        if lit > 0:
+                            v_pos_arr[i] = True
+                        else:
+                            v_neg_arr[i] = True
+                    elif n_other > 0:
+                        j = var_to_col[w]
+                        if lit > 0:
+                            pos_mask[i, j] = True
+                        else:
+                            neg_mask[i, j] = True
+
+            if n_other > 0:
+                asgn_b = assignments[np.newaxis, :, :]
+                clause_other_sat = (
+                    (asgn_b & pos_mask[:, np.newaxis, :]).any(-1) |
+                    (~asgn_b & neg_mask[:, np.newaxis, :]).any(-1)
+                )
+            else:
+                clause_other_sat = np.zeros((n_vc, n_asgn), dtype=bool)
+
+            all_sat_pos = (v_pos_arr[:, np.newaxis] | clause_other_sat).all(axis=0)
+            all_sat_neg = (v_neg_arr[:, np.newaxis] | clause_other_sat).all(axis=0)
+            local_sat_pos[v] = float(all_sat_pos.mean())
+            local_sat_neg[v] = float(all_sat_neg.mean())
+
+        result = np.empty(2 * n_occ, dtype=np.float32)
+        idx = 0
+        for clause in clauses:
+            for lit in clause:
+                v = abs(lit) - 1
+                result[idx]     = local_sat_pos[v]
+                result[idx + 1] = local_sat_neg[v]
+                idx += 2
+        return result
+
+    # ------------------------------------------------------------------
+    # EXACT PATH: per-occurrence with memoization on (v, shared_clause_indices)
+    #
+    # For structured instances (e.g. XOR-gate crypto) many occurrences share
+    # identical shared_clause_indices → compute once and cache.  For random
+    # 3-SAT every key is unique, but those instances are small and fast anyway.
+    # ------------------------------------------------------------------
+    results: typing.List[float] = []
+    cache: typing.Dict[typing.Tuple, typing.Tuple[float, float]] = {}
+
+    for ci, clause in tqdm(
+        enumerate(clauses), desc="local_sat (exact)", total=len(clauses),
+        disable=not show_progress, leave=False,
+    ):
+        for lit in clause:
+            v = abs(lit) - 1
+
+            other_vars_in_c = [abs(l2) - 1 for l2 in clause if abs(l2) - 1 != v]
+            if not other_vars_in_c:
+                results.append(1.0)
+                results.append(1.0)
+                continue
+
+            # k2 neighbourhood: clauses sharing any non-v variable with ci
+            k2_clauses: set = set()
+            for w in other_vars_in_c:
+                k2_clauses.update(var_to_clause_set[w])
+
+            shared_clause_indices = sorted(var_to_clause_set[v] & k2_clauses)
+            if not shared_clause_indices:
+                results.append(1.0)
+                results.append(1.0)
+                continue
+
+            # Cache: many occurrences (especially in XOR-gate crypto) share the
+            # same shared_clause_indices for the same variable → reuse result.
+            key = (v, tuple(shared_clause_indices))
+            if key in cache:
+                pos_val, neg_val = cache[key]
+                results.append(pos_val)
+                results.append(neg_val)
+                continue
+
+            # --- first time seeing this (v, neighbourhood) pair ---
+            other_vars_set2: set = set()
+            for sci in shared_clause_indices:
+                for l2 in clauses[sci]:
+                    other_vars_set2.add(abs(l2) - 1)
+            other_vars_set2.discard(v)
+            other_vars_list = sorted(other_vars_set2)
+            n_other = len(other_vars_list)
+            var_to_col = {w: j for j, w in enumerate(other_vars_list)}
+
+            n_shared = len(shared_clause_indices)
+            search_space = 1 << n_other
+            if n_other == 0:
+                assignments = np.empty((1, 0), dtype=bool)
+            elif search_space <= n_samples:
+                assignments = (
+                    (np.arange(search_space)[:, None] >> np.arange(n_other - 1, -1, -1)[None, :]) & 1
+                ).astype(bool)
+            else:
+                assignments = np.random.randint(0, 2, size=(n_samples, n_other)).astype(bool)
+
+            n_asgn = assignments.shape[0]
+
+            clause_other_sat_list: typing.List[np.ndarray] = []
+            clause_v_pos_sat: typing.List[bool] = []
+            clause_v_neg_sat: typing.List[bool] = []
+            for sci in shared_clause_indices:
+                other_sat = np.zeros(n_asgn, dtype=bool)
+                v_pos = False
+                v_neg = False
+                for l2 in clauses[sci]:
+                    w = abs(l2) - 1
+                    if w == v:
+                        if l2 > 0:
+                            v_pos = True
+                        else:
+                            v_neg = True
+                    elif n_other > 0:
+                        col = var_to_col[w]
+                        other_sat |= (assignments[:, col] == (l2 > 0))
+                clause_other_sat_list.append(other_sat)
+                clause_v_pos_sat.append(v_pos)
+                clause_v_neg_sat.append(v_neg)
+
+            for sign_pos, v_sat_flags in ((True, clause_v_pos_sat), (False, clause_v_neg_sat)):
+                all_satisfied = np.ones(n_asgn, dtype=bool)
+                for i in range(n_shared):
+                    if not v_sat_flags[i]:
+                        all_satisfied &= clause_other_sat_list[i]
+                val = float(all_satisfied.mean())
+                if sign_pos:
+                    pos_val = val
+                else:
+                    neg_val = val
+
+            cache[key] = (pos_val, neg_val)
+            results.append(pos_val)
+            results.append(neg_val)
+
+    return np.array(results, dtype=np.float32)
+
 
 class BPGParamBuilder():
     """
@@ -455,7 +845,11 @@ class BPGParamBuilder():
     
     def __init__(self,
                  cnf: typing.List[typing.List[int]],
-                 n_vars: int = None):
+                 n_vars: int = None,
+                 compute_local_satisfaction_percentages: bool = True,
+                 compute_up_features: bool = False,
+                 compute_c2l: bool = True,
+                 compute_l2c: bool = True):
         init_start = time.time()
         
         all_vars = set([abs(l) for clause in cnf for l in clause])
@@ -506,23 +900,61 @@ class BPGParamBuilder():
         self._cache_misses = 0
 
         # A = time.time()
+        # Show per-phase progress bars for instances large enough to be slow
+        n_edges_approx = 2 * sum(len(c) for c in all_clauses)
+        _progress = n_edges_approx > 20_000
+
         c2l_start = time.time()
-        c2l_msg_receiver_indices, c2l_msg_sender_indices = self.c2l_message_input()
+        if compute_c2l:
+            c2l_msg_receiver_indices, c2l_msg_sender_indices = _compute_c2l_inputs_fast(
+                all_clauses, n_vars, show_progress=_progress
+            )
+        else:
+            c2l_msg_receiver_indices = torch.empty(0, dtype=torch.long)
+            c2l_msg_sender_indices   = torch.empty(0, dtype=torch.long)
         c2l_time = time.time() - c2l_start
-        # B = time.time()
-        # print(f"l2c message input took {B-A} seconds")
-        # C = time.time()
+
         l2c_start = time.time()
-        l2c_msg_receiver_indices, l2c_assignment_indices, l2c_assignment_neighborhoods = self.l2c_satisfying_assignment_sum_input()
+        if compute_l2c:
+            l2c_msg_receiver_indices, l2c_assignment_indices, l2c_assignment_neighborhoods = _compute_l2c_inputs_fast(
+                all_clauses, show_progress=_progress
+            )
+        else:
+            l2c_msg_receiver_indices      = torch.empty(0, dtype=torch.long)
+            l2c_assignment_indices        = torch.empty(0, dtype=torch.long)
+            l2c_assignment_neighborhoods  = torch.empty(0, dtype=torch.long)
         l2c_time = time.time() - l2c_start
         # print(f"c2l message input took {C-B} seconds")
         # D = time.time()
         # local_satisfaction_percentages = torch.tensor([0 for _ in edges], dtype=torch.float),
 
         local_sat_start = time.time()
-        local_satisfaction_percentages = torch.tensor([self.local_satisfaction_percentage(e) for e in edges], dtype=torch.float)
+        if compute_local_satisfaction_percentages:
+            lsp_np = _compute_all_local_sat_percentages(
+                [list(c) for c in all_clauses], n_vars, show_progress=_progress
+            )
+            local_satisfaction_percentages = torch.from_numpy(lsp_np)
+        else:
+            local_satisfaction_percentages = None
         local_sat_time = time.time() - local_sat_start
-        # print(f"local satisfaction percentages took {time.time()-D} seconds")
+
+        # --- UP features (per-literal, shape 2*n_vars × 4) ---
+        up_feat_start = time.time()
+        if compute_up_features:
+            from nsnet.utils.cnf_features import compute_up_features as _compute_up_features
+            up_features = _compute_up_features(n_vars, [list(c) for c in all_clauses])
+        else:
+            up_features = None
+        up_feat_time = time.time() - up_feat_start
+
+        total_time = time.time() - init_start
+
+        # Print timing if it takes more than 1 second
+        if total_time > 1.0:
+            print(f'[BPGParamBuilder] n_vars={n_vars}, n_clauses={len(all_clauses)}, n_edges={len(edges)}')
+            print(f'[BPGParamBuilder] Timing: setup={setup_time:.2f}s, c2l={c2l_time:.2f}s, '
+                  f'l2c={l2c_time:.2f}s, local_sat={local_sat_time:.2f}s, '
+                  f'up_feat={up_feat_time:.2f}s, total={total_time:.2f}s')
 
         self.params = BPGParams(
             n_clauses = len(all_clauses),
@@ -537,7 +969,8 @@ class BPGParamBuilder():
             c2l_msg_sender_indices = c2l_msg_sender_indices,
             l2c_msg_receiver_indices = l2c_msg_receiver_indices,
             l2c_assignment_indices = l2c_assignment_indices,
-            l2c_assignment_neighborhoods = l2c_assignment_neighborhoods
+            l2c_assignment_neighborhoods = l2c_assignment_neighborhoods,
+            up_features_per_literal = up_features,
         )
 
     def edge_to_literal_index(self, edge: Edge):
@@ -1416,7 +1849,7 @@ def _process_single_file(args):
     Process a single CNF file into a graph format.
     This is a module-level function for multiprocessing compatibility.
     """
-    idx, file_path, graph_type, task, output_path = args
+    idx, file_path, graph_type, task, output_path, no_precomputed_local_sat = args
     
     n_vars, clauses = parse_cnf_file(file_path)
     
@@ -1446,16 +1879,134 @@ def _process_single_file(args):
         bpg_params = OldTransform2BPG(n_vars, clauses, task)
         data = OldBPG(*bpg_params)
     elif graph_type == 'BPG':
-        bpg_params = BPGParamBuilder(clauses, n_vars).params
+        bpg_params = BPGParamBuilder(
+            clauses,
+            n_vars,
+            compute_local_satisfaction_percentages=not no_precomputed_local_sat,
+        ).params
         data = BPG(*bpg_params)
     elif graph_type == 'MatrixBPG':
         bpg_params = MatrixBPGParamBuilder(clauses).params
         data = MatrixBPG(*bpg_params)
     else:
         raise ValueError(f'Graph type {graph_type} not supported')
-    
-    torch.save(data, output_path)
+
+    torch.save(_pack_data(data, graph_type), output_path)
     return idx
+
+
+def _pack_data(data, graph_type: str) -> dict:
+    """
+    Serialize a graph Data object as a compact dict of downcast tensors.
+    Index tensors are stored as int32 (half the size of int64).
+    Float tensors are stored as float16.
+    Scalar ints are stored as-is.
+    """
+    def _i32(t):
+        """Cast a long tensor to int32 (safe for values < 2^31)."""
+        return t.to(torch.int32) if t is not None else None
+
+    def _f16(t):
+        """Cast a float tensor to float16."""
+        return t.to(torch.float16) if t is not None else None
+
+    d = {'__graph_type__': graph_type}
+
+    if graph_type == 'LCG':
+        d['l_size'] = data.l_size
+        d['c_size'] = data.c_size
+        d['c_edge_index'] = _i32(data.c_edge_index)
+        d['l_edge_index'] = _i32(data.l_edge_index)
+        if data.l_batch is not None:
+            d['l_batch'] = _i32(data.l_batch)
+        if data.c_batch is not None:
+            d['c_batch'] = _i32(data.c_batch)
+
+    elif graph_type == 'BPG':
+        d['n_clauses'] = data.n_clauses
+        d['n_literals'] = data.n_literals
+        d['literal_indices_per_edge'] = _i32(data.literal_indices_per_edge)
+        d['literal_indices_per_occurence'] = _i32(data.literal_indices_per_occurence)
+        d['clause_indices_per_occurence'] = _i32(data.clause_indices_per_occurence)
+        d['local_satisfaction_percentage_per_edge'] = _f16(data.local_satisfaction_percentage_per_edge)
+        d['c2l_msg_receiver_indices'] = _i32(data.c2l_msg_receiver_indices)
+        d['c2l_msg_sender_indices'] = _i32(data.c2l_msg_sender_indices)
+        d['l2c_msg_receiver_indices'] = _i32(data.l2c_msg_receiver_indices)
+        d['l2c_assignment_indices'] = _i32(data.l2c_assignment_indices)
+        d['l2c_assignment_neighborhoods'] = _i32(data.l2c_assignment_neighborhoods)
+        # subgraphs_p1/p0 are None in the standard processing path
+
+    elif graph_type == 'OldBPG':
+        # Fall back to storing the full object for OldBPG (rarely used)
+        return data
+
+    elif graph_type == 'MatrixBPG':
+        d['n_clauses'] = data.n_clauses
+        d['n_literals'] = data.n_literals
+        d['literal_to_edges_matrix'] = data.literal_to_edges_matrix
+        d['clause_to_literals_matrix'] = data.clause_to_literals_matrix
+        d['edge_to_literal_neighborhood_matrix'] = data.edge_to_literal_neighborhood_matrix
+        d['edge_to_clause_assignments_matrix'] = data.edge_to_clause_assignments_matrix
+        d['clause_assignment_to_neighborhood_matrix'] = data.clause_assignment_to_neighborhood_matrix
+
+    return d
+
+
+def _unpack_data(d) -> object:
+    """
+    Reconstruct a graph Data object from the compact dict saved by _pack_data.
+    Upcast tensors back to their required dtypes.
+    """
+    # Backward compat: old files stored the Data object directly
+    if not isinstance(d, dict) or '__graph_type__' not in d:
+        return d
+
+    graph_type = d['__graph_type__']
+
+    def _long(t):
+        return t.to(torch.long) if t is not None else None
+
+    def _float(t):
+        return t.to(torch.float) if t is not None else None
+
+    if graph_type == 'LCG':
+        return LCG(
+            l_size=d['l_size'],
+            c_size=d['c_size'],
+            c_edge_index=_long(d.get('c_edge_index')),
+            l_edge_index=_long(d.get('l_edge_index')),
+            l_batch=_long(d.get('l_batch')),
+            c_batch=_long(d.get('c_batch')),
+        )
+
+    elif graph_type == 'BPG':
+        return BPG(
+            n_clauses=d['n_clauses'],
+            n_literals=d['n_literals'],
+            literal_indices_per_edge=_long(d['literal_indices_per_edge']),
+            literal_indices_per_occurence=_long(d['literal_indices_per_occurence']),
+            clause_indices_per_occurence=_long(d['clause_indices_per_occurence']),
+            local_satisfaction_percentage_per_edge=_float(d.get('local_satisfaction_percentage_per_edge')),
+            c2l_msg_receiver_indices=_long(d['c2l_msg_receiver_indices']),
+            c2l_msg_sender_indices=_long(d['c2l_msg_sender_indices']),
+            l2c_msg_receiver_indices=_long(d['l2c_msg_receiver_indices']),
+            l2c_assignment_indices=_long(d['l2c_assignment_indices']),
+            l2c_assignment_neighborhoods=_long(d['l2c_assignment_neighborhoods']),
+        )
+
+    elif graph_type == 'MatrixBPG':
+        return MatrixBPG(
+            n_clauses=d['n_clauses'],
+            n_literals=d['n_literals'],
+            literal_to_edges_matrix=d['literal_to_edges_matrix'],
+            clause_to_literals_matrix=d['clause_to_literals_matrix'],
+            edge_to_literal_neighborhood_matrix=d['edge_to_literal_neighborhood_matrix'],
+            edge_to_clause_assignments_matrix=d['edge_to_clause_assignments_matrix'],
+            clause_assignment_to_neighborhood_matrix=d['clause_assignment_to_neighborhood_matrix'],
+        )
+
+    # Fallback
+    return d
 
 
 class SATDataset(Dataset):
@@ -1516,7 +2067,35 @@ class SATDataset(Dataset):
     
     @property
     def processed_file_names(self):
-        return [f'data_{idx}_{self.graph}_{self.opts.task}.pt' for idx in self.file_indices]
+        return [self._processed_file_name(idx) for idx in self.file_indices]
+
+    def _processed_suffix(self):
+        if self.graph == 'BPG' and getattr(self.opts, 'no_precomputed_local_sat', False):
+            return '_no_precomputed_local_sat'
+        return ''
+
+    def _legacy_processed_file_name(self, idx):
+        return f'data_{idx}_{self.graph}_{self.opts.task}.pt'
+
+    def _target_processed_file_name(self, idx):
+        return f'data_{idx}_{self.graph}_{self.opts.task}{self._processed_suffix()}.pt'
+
+    def _processed_file_name(self, idx):
+        target_name = self._target_processed_file_name(idx)
+
+        # In no-precompute mode, reuse existing legacy BPG cache files (with
+        # local satisfaction percentages) and let the model ignore that feature.
+        if self.graph == 'BPG' and getattr(self.opts, 'no_precomputed_local_sat', False):
+            target_path = os.path.join(self.processed_dir, target_name)
+            if os.path.exists(target_path):
+                return target_name
+
+            legacy_name = self._legacy_processed_file_name(idx)
+            legacy_path = os.path.join(self.processed_dir, legacy_name)
+            if os.path.exists(legacy_path):
+                return legacy_name
+
+        return target_name
     
     def process(self):
         """
@@ -1542,9 +2121,21 @@ class SATDataset(Dataset):
         # Prepare arguments for parallel processing
         process_args = []
         for idx, (file_path, label) in enumerate(zip(self.all_files, self.all_labels)):
-            file_name = f'data_{idx}_{self.graph}_{self.opts.task}.pt'
+            file_name = self._processed_file_name(idx)
             output_path = os.path.join(self.processed_dir, file_name)
-            process_args.append((idx, file_path, self.graph, self.opts.task, output_path))
+            if os.path.exists(output_path):
+                continue
+
+            # If no cache exists yet for this item, write to the mode-specific target.
+            output_path = os.path.join(self.processed_dir, self._target_processed_file_name(idx))
+            process_args.append((
+                idx,
+                file_path,
+                self.graph,
+                self.opts.task,
+                output_path,
+                getattr(self.opts, 'no_precomputed_local_sat', False),
+            ))
         
         # Process files in parallel with 4 workers
         completed = 0
@@ -1941,9 +2532,10 @@ class SATDataset(Dataset):
         """
         Pulls a processed GRAPH from a .pt file in self.processed_dir
         """
-        file_name = f'data_{idx}_{self.graph}_{self.opts.task}.pt'
+        file_name = self._processed_file_name(idx)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=FutureWarning)
-            data = torch.load(os.path.join(self.processed_dir, file_name))
+            raw = torch.load(os.path.join(self.processed_dir, file_name), weights_only=False)
+        data = _unpack_data(raw)
         data.y = self.all_labels[idx]
         return data
