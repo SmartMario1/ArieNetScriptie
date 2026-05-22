@@ -1,0 +1,94 @@
+# @package _global_
+# Config for train_arienet_rlaf.py
+#
+# Run with:
+#   python train_arienet_rlaf.py
+#   python train_arienet_rlaf.py method=dpo
+#   python train_arienet_rlaf.py use_cooc=true
+#   python train_arienet_rlaf.py from_checkpoint=runs/ArieNetRLAF/best.pt
+
+defaults:
+  - _self_
+
+# ---- Training method: grpo or dpo ----------------------------------------
+method: grpo
+
+# ---- Whether to use the COOC (literal co-occurrence) graph extension ------
+use_cooc: false
+
+# ---- Checkpoint handling --------------------------------------------------
+model_name: ArieNetRLAF_3SAT
+model_dir: runs/${model_name}
+
+from_checkpoint: null
+
+val_interval: 5
+ckpt_interval: null      # "best.pt" is always saved; set to e.g. 10 for periodic saves
+
+# ---- Training hyper-parameters -------------------------------------------
+training:
+  iterations: 2000
+  cnf_per_iter: 100        # number of CNFs to sample per iteration (must be divisible by batch_size)
+  steps_per_iter: 50       # gradient steps per iteration
+  num_samples: 40          # policy samples per CNF per iteration (paper uses 40)
+  clip_ratio: 0.2          # GRPO clip ratio — paper uses 0.1 for March+3SAT
+  beta: 1.0                # DPO beta (ignored for GRPO)
+  kl_penalty: 1.0          # KL penalty weight — paper uses 1.0 for March+3SAT
+  target_stat: decisions   # solver metric to minimise (decisions / conflicts / CPU time)
+  use_amp: true            # mixed-precision training (requires CUDA)
+  accum_steps: 1           # gradient accumulation steps (increase to reduce peak VRAM)
+
+# ---- Dataset paths --------------------------------------------------------
+dataset:
+  # Glob patterns relative to the nsnet working directory (used when *_dirs is null)
+  train_path: "dataRLAF/training/3sat/**/*.cnf"
+  val_path:   "dataRLAF/validation/3sat/**/*.cnf"
+
+  # Optional: list of specific directories to search for .cnf files.
+  # Overrides train_path / val_path when set.
+  # Example:
+  #   train_dirs: ["dataRLAF/training/3sat/sat", "dataRLAF/training/crypto"]
+  #   val_dirs:   ["dataRLAF/validation/3sat/sat", "dataRLAF/validation/crypto"]
+  train_dirs: null
+  val_dirs:   null
+
+  num_process_workers: 4   # workers for initial BPG cache build
+
+# ---- Solver ---------------------------------------------------------------
+solver:
+  solver: march            # march (default, built-in) | glucose (needs solver_dir → RLAF repo)
+  num_workers: 8           # parallel solver processes
+  # For march: keep solver_dir as "." (march binaries are in nsnet itself).
+  # For glucose: set solver_dir to the RLAF repo path, e.g. "../RLAF".
+  solver_dir: "."
+  params: {}               # extra CLI flags; glucose uses e.g. {cpu-lim: 60, K: 0.1}
+
+# ---- Model architecture ---------------------------------------------------
+model:
+  dim: 128                 # hidden dimension
+  n_rounds: 26             # message-passing rounds
+  n_mlp_layers: 3          # MLP depth
+  activation: relu
+  no_precomputed_local_sat: false
+  use_up_features: false
+
+# ---- Policy ---------------------------------------------------------------
+# Sigma parameter for the log-normal weight distributions
+scale_sigma: 0.1
+
+# ---- DataLoader -----------------------------------------------------------
+loader:
+  batch_size: 20
+  num_workers: 0
+
+# ---- Optimiser ------------------------------------------------------------
+optim:
+  lr: 5.0e-5
+  weight_decay: 0.0
+
+# ---- Logging --------------------------------------------------------------
+wandb:
+  project: nsnet-rlaf
+  name: ${model_name}
+
+seed: 0
