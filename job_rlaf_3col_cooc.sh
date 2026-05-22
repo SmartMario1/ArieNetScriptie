@@ -20,8 +20,7 @@
 set -euo pipefail
 
 # ── Paths (adjust if your layout differs) ─────────────────────────────────
-NSNET_DIR="$HOME/Thesis2/nsnet"
-RLAF_DIR="$HOME/Thesis2/RLAF"
+NSNET_DIR="$HOME/thesis/ArieNetScriptie"
 
 # Dataset: adjust these glob patterns to match where you extracted your tarball.
 TRAIN_PATH="../3col/**/*.cnf"
@@ -47,7 +46,6 @@ echo "GPU:  $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || e
 echo "CPU cores available: $SLURM_CPUS_PER_TASK"
 echo "Conda env: $CONDA_ENV  (Python: $(python --version))"
 echo "NSNET_DIR: $NSNET_DIR"
-echo "RLAF_DIR:  $RLAF_DIR"
 echo "==========================================="
 
 # ── Train (paper settings, with COOC) ─────────────────────────────────────
@@ -72,7 +70,6 @@ python train_arienet_rlaf.py \
     training.accum_steps=1 \
     training.target_stat=decisions \
     solver.solver=glucose \
-    solver.solver_dir="$RLAF_DIR" \
     solver.num_workers=16 \
     "solver.params={cpu-lim: 60, rnd-freq: 0.0, K: 0.1}" \
     "dataset.train_path=$TRAIN_PATH" \
