@@ -31,6 +31,7 @@ CONDA_ENV="NSNetArie"
 
 # ── Weights & Biases: force offline mode (no interactive prompt) ───────────
 export WANDB_MODE=offline
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # ── Activate conda ─────────────────────────────────────────────────────────
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
@@ -75,7 +76,8 @@ python train_arienet_rlaf.py \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
-    loader.batch_size=20 \
+    loader.batch_size=10 \
+    training.accum_steps=2 \
     loader.num_workers=0 \
     optim.lr=5e-5 \
     optim.weight_decay=0.0 \
