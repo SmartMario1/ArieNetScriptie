@@ -25,8 +25,8 @@ RLAF_DIR="$HOME/Thesis2/RLAF"
 
 # Dataset: adjust these glob patterns / directory lists to match where you
 # extracted your 3-coloring tarball.  Use the same train/val split as the paper.
-TRAIN_PATH="dataRLAF/training/3col/**/*.cnf"
-VAL_PATH="dataRLAF/validation/3col/**/*.cnf"
+TRAIN_PATH="../3col/**/*.cnf"
+VAL_PATH="../3col_val/**/*.cnf"
 
 # Conda environment name (from environment.yml)
 CONDA_ENV="NSNetArie"

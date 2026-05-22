@@ -84,7 +84,6 @@ dependencies:
       - netcdf4==1.7.2
       - networkit==11.0.1
       - networkx==2.7.1
-      - nsnet==0.1.0
       - nvidia-cublas-cu11==11.11.3.6
       - nvidia-cuda-cupti-cu11==11.8.87
       - nvidia-cuda-nvrtc-cu11==11.8.89
