@@ -31,6 +31,10 @@ Hydra config: configs/config_train_arienet_rlaf.yaml
 
 import os
 import sys
+import time as _time
+
+def _ts(msg):
+    print(f"  [{_time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 from omegaconf import DictConfig, OmegaConf
 import numpy as np
@@ -204,10 +208,11 @@ def main(cfg: DictConfig) -> None:
     method = cfg.method.lower()
 
     for iteration in range(cfg.training.iterations):
-        print(f"\n{'─'*20} {method.upper()} Iteration {iteration} {'─'*20}")
+        print(f"\n{'─'*20} {method.upper()} Iteration {iteration} {'─'*20}", flush=True)
 
         # ---- Validation -------------------------------------------------------
         if iteration % cfg.val_interval == 0:
+            _ts("[val] sample_var_params: starting model forward passes...")
             val_data = sample_var_params(
                 model=model,
                 loader=loader_val,
@@ -216,11 +221,13 @@ def main(cfg: DictConfig) -> None:
                 use_mode=True,
                 scale_sigma=cfg.scale_sigma,
             )
+            _ts("[val] sample_var_params: done. Running solver...")
             val_stats = compute_solver_stats(
                 data_list=val_data,
                 cnf_clauses=dataset_val.cnf_clauses,
                 **solver_kwargs,
             )
+            _ts("[val] solver done. Logging metrics...")
             log_solver_metrics(
                 val_stats, iteration, global_step, prefix="val",
                 target_stat=cfg.training.target_stat,
@@ -232,6 +239,7 @@ def main(cfg: DictConfig) -> None:
                 best_score = score
 
         # ---- Sample training data --------------------------------------------
+        _ts("[train] sample_var_params: starting model forward passes...")
         train_data = sample_var_params(
             model=model,
             loader=loader_train,
@@ -240,19 +248,20 @@ def main(cfg: DictConfig) -> None:
             device=device,
             scale_sigma=cfg.scale_sigma,
         )
-
+        _ts("[train] sample_var_params: done. Running solver...")
         train_stats = compute_solver_stats(
             data_list=train_data,
             cnf_clauses=dataset_train.cnf_clauses,
             **solver_kwargs,
         )
-
+        _ts("[train] solver done. Logging metrics...")
         log_solver_metrics(
             train_stats, iteration, global_step, prefix="train",
             target_stat=cfg.training.target_stat,
         )
 
         # ---- Build iteration dataset -----------------------------------------
+        _ts("Building GRPO advantages and iter dataset...")
         if method == "grpo":
             train_stats["advantage"] = get_grpo_advantage(
                 train_stats, cfg.training.target_stat
@@ -280,6 +289,7 @@ def main(cfg: DictConfig) -> None:
         )
 
         # ---- Optimise --------------------------------------------------------
+        _ts(f"Starting gradient optimisation ({cfg.training.steps_per_iter} steps)...")
         train_fn = train_grpo if method == "grpo" else train_dpo
         common_kwargs = dict(
             model=model,
@@ -301,6 +311,7 @@ def main(cfg: DictConfig) -> None:
 
         if cfg.ckpt_interval is not None and iteration % cfg.ckpt_interval == 0:
             save_model(model, cfg, f"iter={iteration}")
+        _ts(f"Iteration {iteration} complete.")
 
     save_model(model, cfg, "last")
     wandb.finish()

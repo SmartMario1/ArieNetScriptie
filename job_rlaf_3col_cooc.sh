@@ -56,7 +56,7 @@ echo "==========================================="
 # All GRPO/solver hyperparameters are identical to the no-COOC run so that
 # the two runs are directly comparable.
 
-python train_arienet_rlaf.py \
+python -u train_arienet_rlaf.py \
     -n ArieNet_3col_COOC \
     method=grpo \
     use_cooc=true \
