@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --gpus=1
 #SBATCH --mem=60G
-#SBATCH -t 00:15:00
+#SBATCH -t 24:00:00
 #SBATCH --output=slurm_rlaf_3col_cooc_%j.out
 #SBATCH --error=slurm_rlaf_3col_cooc_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -63,7 +63,7 @@ python -u train_arienet_rlaf.py \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \
-    training.steps_per_iter=50 \
+    training.steps_per_iter=25 \
     training.clip_ratio=0.2 \
     training.kl_penalty=0.1 \
     training.use_amp=true \
