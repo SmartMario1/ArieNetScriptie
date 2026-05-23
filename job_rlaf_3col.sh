@@ -12,19 +12,17 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
-# ─── Snellius RLAF Training: ArieNet (no COOC), 3-coloring ────────────────
+# ─── Snellius RLAF Training: ArieNet (no COOC), 3-coloring ─────────────────
 # Paper settings: GRPO, 2000 iterations, glucose solver
-# Run without co-occurrence graph extension
+# Run WITHOUT co-occurrence graph extension (baseline)
 # ──────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 # ── Paths (adjust if your layout differs) ─────────────────────────────────
-NSNET_DIR="$HOME/Thesis2/nsnet"
-RLAF_DIR="$HOME/Thesis2/RLAF"
+NSNET_DIR="$HOME/thesis/ArieNetScriptie"
 
-# Dataset: adjust these glob patterns / directory lists to match where you
-# extracted your 3-coloring tarball.  Use the same train/val split as the paper.
+# Dataset: adjust these glob patterns to match where you extracted your tarball.
 TRAIN_PATH="../3col/**/*.cnf"
 VAL_PATH="../3col_val/**/*.cnf"
 
@@ -33,10 +31,9 @@ CONDA_ENV="NSNetArie"
 
 # ── Weights & Biases: force offline mode (no interactive prompt) ───────────
 export WANDB_MODE=offline
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # ── Activate conda ─────────────────────────────────────────────────────────
-# If conda is not on PATH after this, adjust the path below to your
-# conda/miniconda installation (e.g. $HOME/miniconda3/etc/profile.d/conda.sh)
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV"
 
@@ -50,25 +47,9 @@ echo "GPU:  $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || e
 echo "CPU cores available: $SLURM_CPUS_PER_TASK"
 echo "Conda env: $CONDA_ENV  (Python: $(python --version))"
 echo "NSNET_DIR: $NSNET_DIR"
-echo "RLAF_DIR:  $RLAF_DIR"
 echo "==========================================="
 
 # ── Train (paper settings, no COOC) ───────────────────────────────────────
-# Key settings matching the RLAF paper:
-#   method=grpo              GRPO policy-gradient training
-#   use_cooc=false           No literal co-occurrence edges
-#   training.iterations=2000 2000 training iterations
-#   training.cnf_per_iter=100  100 CNF instances per iteration
-#   training.num_samples=40    40 policy samples per CNF (GRPO group size)
-#   training.steps_per_iter=50 50 gradient steps per iteration
-#   training.clip_ratio=0.2    PPO clip ratio
-#   training.kl_penalty=0.1    KL divergence penalty weight (paper default)
-#   solver.solver=glucose      Glucose CDCL solver (paper default for 3col)
-#   solver.num_workers=16      Parallel solver processes (tune to available cores)
-#   solver.solver_dir          Path to built glucose binary
-#   solver.params.cpu-lim=60   60-second per-instance CPU limit for glucose
-#   solver.params.rnd-freq=0.0 No random branching frequency (paper default)
-#   solver.params.K=0.1        Glucose restart multiplier (paper default)
 
 python train_arienet_rlaf.py \
     -n ArieNet_3col_noCOOC \
@@ -84,9 +65,8 @@ python train_arienet_rlaf.py \
     training.accum_steps=1 \
     training.target_stat=decisions \
     solver.solver=glucose \
-    solver.solver_dir="$RLAF_DIR" \
     solver.num_workers=16 \
-    "solver.params={cpu-lim: 60, rnd-freq: 0.0, K: 0.1}" \
+    "solver.params={}" \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
