@@ -31,6 +31,7 @@ CONDA_ENV="NSNetArie"
 
 # ── Weights & Biases: force offline mode (no interactive prompt) ───────────
 export WANDB_MODE=offline
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # ── Activate conda ─────────────────────────────────────────────────────────
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
