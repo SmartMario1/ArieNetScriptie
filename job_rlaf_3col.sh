@@ -51,18 +51,18 @@ echo "==========================================="
 
 # ── Train (paper settings, no COOC) ───────────────────────────────────────
 
-python train_arienet_rlaf.py \
+python -u train_arienet_rlaf.py \
     -n ArieNet_3col_noCOOC \
     method=grpo \
     use_cooc=false \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \
-    training.steps_per_iter=50 \
+    training.steps_per_iter=25 \
     training.clip_ratio=0.2 \
     training.kl_penalty=0.1 \
     training.use_amp=true \
-    training.accum_steps=1 \
+    training.accum_steps=4 \
     training.target_stat=decisions \
     solver.solver=glucose \
     solver.num_workers=16 \
@@ -70,7 +70,7 @@ python train_arienet_rlaf.py \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
-    loader.batch_size=20 \
+    loader.batch_size=5 \
     loader.num_workers=0 \
     optim.lr=5e-5 \
     optim.weight_decay=0.0 \
