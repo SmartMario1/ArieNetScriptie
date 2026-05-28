@@ -5,3 +5,4 @@ external/
 data/
 dataRLAF/
 data.zip
+__pycache__/*

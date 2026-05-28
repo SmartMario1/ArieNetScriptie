@@ -176,9 +176,9 @@ class ArieNetRLAFCooc(ArieNetRLAF):
     ArieNetRLAF extended with a literal co-occurrence (L2L) message-passing step.
 
     Co-occurrence edges connect pairs of literals that appear together in at
-    least one clause.  Their aggregated signal is injected into the c2l edge
-    features each round, giving the model direct access to literal co-occurrence
-    structure.
+    least one clause.  Each round the current per-literal state (aggregated from
+    c2l edge features) is propagated along co-occurrence edges to neighbouring
+    literals, giving the model direct access to literal co-occurrence structure.
 
     The BPG data must contain `cooc_src_indices` and `cooc_dst_indices`
     (populated by RLAFBPGDataset when use_cooc=True).
@@ -201,8 +201,7 @@ class ArieNetRLAFCooc(ArieNetRLAF):
             no_precomputed_local_sat=no_precomputed_local_sat,
             use_up_features=use_up_features,
         )
-        # Separate learnable start vector and update MLP for co-occurrence edges
-        self.cooc_edges_init = nn.Parameter(torch.randn(1, dim) * 0.01)
+        # MLP that transforms aggregated co-occurrence messages (dim → dim)
         self.l2l_update = MLP(n_mlp_layers, dim, dim, dim, activation)
 
     def forward(self, data):
@@ -213,14 +212,10 @@ class ArieNetRLAFCooc(ArieNetRLAF):
         c2l = (self.c2l_edges_init / self.denom).repeat(n_edges, 1)
         l2c = (self.l2c_edges_init / self.denom).repeat(n_edges, 1)
 
-        # Co-occurrence edge features (one per directed literal pair)
+        # Co-occurrence edge indices (directed literal pairs)
         cooc_src = getattr(data, "cooc_src_indices", None)
         cooc_dst = getattr(data, "cooc_dst_indices", None)
-        if cooc_src is not None and len(cooc_src) > 0:
-            n_cooc = len(cooc_src)
-            cooc_feats = (self.cooc_edges_init / self.denom).repeat(n_cooc, 1)
-        else:
-            cooc_feats = None
+        use_cooc = cooc_src is not None and cooc_dst is not None and len(cooc_src) > 0
 
         # Optional UP-feature injection
         if self.use_up_features:
@@ -263,10 +258,19 @@ class ArieNetRLAFCooc(ArieNetRLAF):
             c2l = self.c2l_msg_update(torch.cat([c2l_arg, local_sat], dim=1))
 
             # ---- L2L: co-occurrence step -----------------------------------------
-            # For each literal l, aggregate cooc edge features from all edges
-            # where cooc_dst == l, then inject into c2l edges incident to l.
-            if cooc_feats is not None and cooc_dst is not None:
-                cooc_agg = scatter_sum(cooc_dst, cooc_feats, n_lit, device)
+            # Aggregate current c2l edge features to get per-literal state, then
+            # send those states along co-occurrence edges so each literal receives
+            # information from all literals it co-occurs with in a clause.
+            if use_cooc:
+                # Current per-literal representation: sum incoming c2l edges
+                lit_curr = scatter_sum(
+                    data.literal_indices_per_edge, c2l, n_lit, device
+                )                                                  # [n_lit, dim]
+                # Message from source literal to destination literal
+                cooc_msgs = lit_curr[cooc_src]                     # [n_cooc, dim]
+                # Aggregate incoming co-occurrence messages at each destination
+                cooc_agg = scatter_sum(cooc_dst, cooc_msgs, n_lit, device)  # [n_lit, dim]
+                # Inject into c2l edge features (residual)
                 c2l = c2l + self.l2l_update(cooc_agg[data.literal_indices_per_edge])
 
         lit_feats = scatter_sum(data.literal_indices_per_edge, c2l, n_lit, device)

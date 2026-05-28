@@ -142,6 +142,7 @@ def train_grpo(
                     accum_count = 0
                     global_step += 1
                     num_steps += 1
+                    print(f"    [grpo] step {num_steps}/{steps}  L={L.item():.4f}  kl={kl_mean.item():.4f}  t={time.time()-t0:.1f}s", flush=True)
 
     wandb.log(
         {

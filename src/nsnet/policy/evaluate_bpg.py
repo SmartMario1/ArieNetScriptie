@@ -165,14 +165,14 @@ def _solve_cnf(
 ) -> dict:
     import os, subprocess, tempfile
 
-    # march* binaries live in nsnet itself; glucose* binaries live in a
-    # separate solvers/ tree (e.g. the RLAF repo).  Set solver_dir accordingly.
+    # All binaries live in the nsnet directory itself (solver_dir=".").
     solver_bins = {
-        "march":            os.path.join(solver_dir, "march_unmodified/march/march_nh"),
-        "march_weighted":   os.path.join(solver_dir, "march_weighted/march_nh"),
-        # Optional – point solver_dir at the RLAF repo to use these:
-        "glucose":          os.path.join(solver_dir, "solvers/glucose/simp/glucose_static"),
-        "glucose_weighted": os.path.join(solver_dir, "glucose_weighted/simp/glucose"),
+        "march":               os.path.join(solver_dir, "march_unmodified/march/march_nh"),
+        "march_weighted":      os.path.join(solver_dir, "march_weighted/march_nh"),
+        "glucose_unmodified":  os.path.join(solver_dir, "glucose_unmodified/simp/glucose"),
+        "glucose_weighted":    os.path.join(solver_dir, "glucose_weighted/simp/glucose"),
+        # Legacy key kept for back-compatibility:
+        "glucose":             os.path.join(solver_dir, "glucose_unmodified/simp/glucose"),
     }
 
     dimacs = _make_dimacs(clauses, var_params)
@@ -189,8 +189,8 @@ def _solve_cnf(
         result = subprocess.run(call, capture_output=True, text=True)
         os.remove(tmp_path)
     else:
-        # glucose / glucose_weighted
-        bin_key = "glucose_weighted" if var_params is not None else "glucose"
+        # glucose_weighted when guidance is provided, unmodified glucose otherwise
+        bin_key = "glucose_weighted" if var_params is not None else "glucose_unmodified"
         call = [solver_bins[bin_key]]
         if seed is not None and seed > 0:
             call.append(f"-rnd-seed={seed}")
@@ -216,10 +216,10 @@ def compute_solver_stats(
     Args:
         data_list:    List of BPG graphs with data.var_params and data.cnf_id.
         cnf_clauses:  Mapping from cnf_id to list-of-clauses.
-        solver_dir:   Root directory containing march_weighted/ (or solvers/ for glucose).
+        solver_dir:   Root directory containing the solver binaries (default: ".").
         num_workers:  CPU cores for parallel solving.
-        solver:       "march" (default) or "glucose". For glucose, solver_dir must
-                      point to a directory containing solvers/glucose/.
+        solver:       "march" (default), "glucose", or "glucose_unmodified". All
+                      binaries are expected inside solver_dir.
         **solver_params: Extra solver CLI arguments (used by glucose only).
     """
 
