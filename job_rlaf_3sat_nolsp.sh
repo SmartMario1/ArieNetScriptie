@@ -23,8 +23,8 @@ set -euo pipefail
 # ── Paths ──────────────────────────────────────────────────────────────────
 NSNET_DIR="$HOME/thesis/ArieNetScriptie"
 
-TRAIN_PATH="/scratch-shared/shoffman/data/data/training/3-sat/**/*.cnf"
-VAL_PATH="/scratch-shared/shoffman/data/data/validation/3-sat/**/*.cnf"
+TRAIN_PATH="/scratch-shared/shoffman/data/data/training/3sat/**/*.cnf"
+VAL_PATH="/scratch-shared/shoffman/data/data/validation/3sat/**/*.cnf"
 
 CONDA_ENV="NSNetArie"
 
