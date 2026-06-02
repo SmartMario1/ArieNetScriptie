@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --gpus=1
 #SBATCH --mem=60G
-#SBATCH -t 8:00:00
+#SBATCH -t 24:00:00
 #SBATCH --output=slurm_rlaf_3sat_cooc_march_%j.out
 #SBATCH --error=slurm_rlaf_3sat_cooc_march_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -68,7 +68,7 @@ python -u train_arienet_rlaf.py \
     dataset.num_process_workers=4 \
     loader.batch_size=5 \
     loader.num_workers=0 \
-    optim.lr=5e-5 \
+    optim.lr=1e-4 \
     optim.weight_decay=0.0 \
     scale_sigma=0.1 \
     val_interval=5 \
