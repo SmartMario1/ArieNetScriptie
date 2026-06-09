@@ -375,7 +375,7 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
                 # Per-edge cooc signal: cooc edge features broadcast back to BPG
                 # edges via the literal each BPG edge is connected to
                 cooc_lit = scatter_sum(cooc_dst, cooc_feats, n_lit, device)  # [n_lit, dim]
-                l2c_src = cooc_lit[data.literal_indices_per_edge]            # [n_edges, dim]
+                l2c_src = c2l + cooc_lit[data.literal_indices_per_edge]            # [n_edges, dim]
             else:
                 # No cooc edges: fall back to c2l as source (original behaviour)
                 l2c_src = c2l
