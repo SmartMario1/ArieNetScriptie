@@ -50,7 +50,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # ── nsnet package on sys.path ──────────────────────────────────────────────
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from nsnet.models.arienet_rlaf import ArieNetRLAF, ArieNetRLAFCooc
+from nsnet.models.arienet_rlaf import ArieNetRLAF, ArieNetRLAFCooc, ArieNetRLAFCoocEdge
 from nsnet.datasets.rlaf_dataset import RLAFBPGDataset, RLAFTrainingDataset, _collate_skip_none
 from nsnet.policy.evaluate_bpg import sample_var_params, compute_solver_stats
 from nsnet.training.grpo_bpg import train_grpo, get_grpo_advantage
@@ -62,7 +62,12 @@ from nsnet.training.dpo_bpg import train_dpo
 # ---------------------------------------------------------------------------
 
 def build_model(cfg: DictConfig) -> torch.nn.Module:
-    model_cls = ArieNetRLAFCooc if cfg.use_cooc else ArieNetRLAF
+    if cfg.get("use_cooc_edge", False):
+        model_cls = ArieNetRLAFCoocEdge
+    elif cfg.use_cooc:
+        model_cls = ArieNetRLAFCooc
+    else:
+        model_cls = ArieNetRLAF
     return model_cls(
         dim=cfg.model.dim,
         n_rounds=cfg.model.n_rounds,
@@ -140,7 +145,7 @@ def main(cfg: DictConfig) -> None:
 
     # ── Datasets ───────────────────────────────────────────────────────────
     dataset_kwargs = dict(
-        use_cooc=cfg.use_cooc,
+        use_cooc=cfg.use_cooc or cfg.get("use_cooc_edge", False),
         no_precomputed_local_sat=cfg.model.no_precomputed_local_sat,
         use_up_features=cfg.model.use_up_features,
         num_workers=cfg.dataset.num_process_workers,
