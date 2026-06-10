@@ -326,6 +326,8 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         self.l2l_msg = MLP(n_mlp_layers, dim * 2, dim, dim, activation)
         # MLP: aggregated incoming messages → updated cooc edge feat  (dim → dim)
         self.l2l_update = MLP(n_mlp_layers, dim, dim, dim, activation)
+        # Override l2c_msg_update: input is [c2l | cooc_lit] so 2*dim wide
+        self.l2c_msg_update = MLP(n_mlp_layers, dim * 2, dim, dim, activation)
 
     def forward(self, data):
         device = data.literal_indices_per_edge.device
@@ -375,10 +377,10 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
                 # Per-edge cooc signal: cooc edge features broadcast back to BPG
                 # edges via the literal each BPG edge is connected to
                 cooc_lit = scatter_sum(cooc_dst, cooc_feats, n_lit, device)  # [n_lit, dim]
-                l2c_src = c2l + cooc_lit[data.literal_indices_per_edge]            # [n_edges, dim]
+                l2c_src = torch.cat([c2l, cooc_lit[data.literal_indices_per_edge]], dim=1)  # [n_edges, 2*dim]
             else:
-                # No cooc edges: fall back to c2l as source (original behaviour)
-                l2c_src = c2l
+                # No cooc edges: pad with zeros to keep input width consistent
+                l2c_src = torch.cat([c2l, torch.zeros_like(c2l)], dim=1)
 
             # ---- Clause → Literal (l2c step) ------------------------------------
             # Takes from l2l (cooc_lit per edge) when cooc is available,
