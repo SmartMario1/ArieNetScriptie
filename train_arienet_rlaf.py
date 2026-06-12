@@ -68,7 +68,7 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         model_cls = ArieNetRLAFCooc
     else:
         model_cls = ArieNetRLAF
-    return model_cls(
+    kwargs = dict(
         dim=cfg.model.dim,
         n_rounds=cfg.model.n_rounds,
         n_mlp_layers=cfg.model.n_mlp_layers,
@@ -76,6 +76,9 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         no_precomputed_local_sat=cfg.model.no_precomputed_local_sat,
         use_up_features=cfg.model.use_up_features,
     )
+    if cfg.get("use_cooc_edge", False):
+        kwargs["cooc_normalize"] = cfg.get("cooc_normalize", False)
+    return model_cls(**kwargs)
 
 
 def save_model(model: torch.nn.Module, cfg: DictConfig, name: str = "last") -> None:

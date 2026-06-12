@@ -42,6 +42,7 @@ python -u train_arienet_rlaf.py \
     method=grpo \
     use_cooc=false \
     use_cooc_edge=true \
+    cooc_normalize=true \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \

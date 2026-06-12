@@ -311,6 +311,7 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         activation: str = "relu",
         no_precomputed_local_sat: bool = False,
         use_up_features: bool = False,
+        cooc_normalize: bool = False,
     ):
         super().__init__(
             dim=dim,
@@ -320,6 +321,11 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
             no_precomputed_local_sat=no_precomputed_local_sat,
             use_up_features=use_up_features,
         )
+        # When True, use mean aggregation over cooc edges instead of sum.
+        # Necessary for variable-degree graphs like 3-SAT where high-degree
+        # literals would otherwise blow up the cooc signal over many rounds.
+        # Keep False (default) for 3-coloring to preserve existing behaviour.
+        self.cooc_normalize = cooc_normalize
         # Learnable initial state for each co-occurrence edge (small init)
         self.cooc_edges_init = nn.Parameter(torch.randn(1, dim) * 0.01)
         # MLP: [cooc_edge_feat | src_lit_state] → message  (2*dim → dim)
@@ -345,6 +351,12 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         if use_cooc:
             n_cooc = len(cooc_src)
             cooc_feats = (self.cooc_edges_init / self.denom).repeat(n_cooc, 1)  # [n_cooc, dim]
+            if self.cooc_normalize:
+                # Precompute per-literal cooc in-degree for mean aggregation.
+                # Needed for variable-degree graphs (e.g. 3-SAT) where sum
+                # aggregation causes activation blow-up over many rounds.
+                _ones = torch.ones(n_cooc, 1, dtype=cooc_feats.dtype, device=device)
+                cooc_dst_degree = scatter_sum(cooc_dst, _ones, n_lit, device).clamp(min=1.0)  # [n_lit, 1]
 
         # Optional UP-feature injection
         if self.use_up_features:
@@ -370,6 +382,8 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
 
                 # Aggregate messages at destination literals
                 cooc_agg = scatter_sum(cooc_dst, cooc_msg, n_lit, device)  # [n_lit, dim]
+                if self.cooc_normalize:
+                    cooc_agg = cooc_agg / cooc_dst_degree
 
                 # Update cooc edge features residually from dst-literal aggregation
                 cooc_feats = cooc_feats + self.l2l_update(cooc_agg[cooc_dst])
@@ -377,6 +391,8 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
                 # Per-edge cooc signal: cooc edge features broadcast back to BPG
                 # edges via the literal each BPG edge is connected to
                 cooc_lit = scatter_sum(cooc_dst, cooc_feats, n_lit, device)  # [n_lit, dim]
+                if self.cooc_normalize:
+                    cooc_lit = cooc_lit / cooc_dst_degree
                 l2c_src = torch.cat([c2l, cooc_lit[data.literal_indices_per_edge]], dim=1)  # [n_edges, 2*dim]
             else:
                 # No cooc edges: pad with zeros to keep input width consistent

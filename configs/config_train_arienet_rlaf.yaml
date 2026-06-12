@@ -16,6 +16,10 @@ method: grpo
 # ---- Whether to use the COOC (literal co-occurrence) graph extension ------
 use_cooc: false
 
+# ---- Whether to normalise cooc aggregation by degree (mean instead of sum)
+# Set to true for variable-degree graphs like 3-SAT; keep false for 3-coloring.
+cooc_normalize: false
+
 # ---- Checkpoint handling --------------------------------------------------
 model_name: ArieNetRLAF_3SAT
 model_dir: runs/${model_name}
