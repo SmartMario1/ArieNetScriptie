@@ -54,6 +54,7 @@ python -u train_arienet_rlaf.py \
     training.target_stat=decisions \
     solver.solver=glucose \
     solver.num_workers=16 \
+	solver.solver_dir="../solvercopy1/" \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
