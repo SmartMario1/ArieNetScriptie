@@ -7,8 +7,8 @@
 #SBATCH --gpus=1
 #SBATCH --mem=60G
 #SBATCH -t 24:00:00
-#SBATCH --output=slurm_rlaf_3sat_cooc_edge_%j.out
-#SBATCH --error=slurm_rlaf_3sat_cooc_edge_%j.err
+#SBATCH --output=slurm_rlaf_3sat_cooc_edge_%j_log.out
+#SBATCH --error=slurm_rlaf_3sat_cooc_edge_%j_log.err
 
 # ─── Snellius RLAF Training: ArieNetCoocEdge, glucose solver ───────────────
 # Uses use_cooc_edge=true → ArieNetRLAFCoocEdge, where the L2L co-occurrence
@@ -38,11 +38,11 @@ echo "NSNET_DIR: $NSNET_DIR"
 echo "==========================================="
 
 python -u train_arienet_rlaf.py \
-    -n ArieNet_3sat_COOCEdge \
+    -n ArieNet_3sat_COOCEdge_log \
     method=grpo \
     use_cooc=false \
     use_cooc_edge=true \
-    cooc_normalize=true \
+    cooc_norm_mode=log \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \
@@ -59,13 +59,13 @@ python -u train_arienet_rlaf.py \
     dataset.num_process_workers=4 \
     loader.batch_size=5 \
     loader.num_workers=0 \
-    optim.lr=1e-4 \
+    optim.lr=5e-5 \
     optim.weight_decay=0.0 \
     scale_sigma=0.1 \
     val_interval=5 \
     ckpt_interval=100 \
     seed=42 \
     wandb.project=nsnet-rlaf \
-    wandb.name=ArieNet_3sat_COOCEdge
+    wandb.name=ArieNet_3sat_COOCEdge_log
 
 echo "===== Job finished: $(date) ====="

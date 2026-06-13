@@ -77,7 +77,7 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         use_up_features=cfg.model.use_up_features,
     )
     if cfg.get("use_cooc_edge", False):
-        kwargs["cooc_normalize"] = cfg.get("cooc_normalize", False)
+        kwargs["cooc_norm_mode"] = cfg.get("cooc_norm_mode", "none")
     return model_cls(**kwargs)
 
 

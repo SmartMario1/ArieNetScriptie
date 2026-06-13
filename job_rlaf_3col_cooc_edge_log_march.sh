@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J rlaf_3sat_cooc_edge_march
+#SBATCH -J rlaf_3col_cooc_edge_log_march
 #SBATCH -p gpu_a100
 #SBATCH -N 1
 #SBATCH --ntasks=1
@@ -7,18 +7,20 @@
 #SBATCH --gpus=1
 #SBATCH --mem=60G
 #SBATCH -t 24:00:00
-#SBATCH --output=slurm_rlaf_3sat_cooc_edge_march_%j.out
-#SBATCH --error=slurm_rlaf_3sat_cooc_edge_march_%j.err
+#SBATCH --output=slurm_rlaf_3col_cooc_edge_log_march_%j.out
+#SBATCH --error=slurm_rlaf_3col_cooc_edge_log_march_%j.err
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=YOUR_EMAIL@example.com
 
-# ─── Snellius RLAF Training: ArieNetCoocEdge, march solver ─────────────────
-# Identical to job_rlaf_3sat_cooc_edge.sh except solver=march.
+# ─── Snellius RLAF Training: ArieNetCoocEdge + symlog normalisation, march
+# Identical to job_rlaf_3col_cooc_edge_log.sh except solver=march.
 # ──────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 NSNET_DIR="$HOME/thesis/ArieNetScriptie"
-TRAIN_PATH="/scratch-shared/shoffman/data/data/training/3sat/**/*.cnf"
-VAL_PATH="/scratch-shared/shoffman/data/data/validation/3sat/**/*.cnf"
+TRAIN_PATH="../3col/**/*.cnf"
+VAL_PATH="../3col_val/**/*.cnf"
 CONDA_ENV="NSNetArie"
 
 export WANDB_MODE=offline
@@ -37,7 +39,7 @@ echo "NSNET_DIR: $NSNET_DIR"
 echo "==========================================="
 
 python -u train_arienet_rlaf.py \
-    -n ArieNet_3sat_COOCEdge_march \
+    -n ArieNet_3col_COOCEdge_log_march \
     method=grpo \
     use_cooc=false \
     use_cooc_edge=true \
@@ -65,6 +67,6 @@ python -u train_arienet_rlaf.py \
     ckpt_interval=100 \
     seed=42 \
     wandb.project=nsnet-rlaf \
-    wandb.name=ArieNet_3sat_COOCEdge_march
+    wandb.name=ArieNet_3col_COOCEdge_log_march
 
 echo "===== Job finished: $(date) ====="
