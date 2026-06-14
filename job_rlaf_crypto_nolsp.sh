@@ -67,7 +67,7 @@ python -u train_arienet_rlaf.py \
     solver.num_workers=16 \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
-    dataset.num_process_workers=4 \
+    dataset.num_process_workers=16 \
     loader.batch_size=5 \
     loader.num_workers=0 \
     optim.lr=1e-4 \
