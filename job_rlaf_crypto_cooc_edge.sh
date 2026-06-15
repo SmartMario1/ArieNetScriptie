@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J rlaf_crypto
+#SBATCH -J rlaf_crypto_cooc_edge
 #SBATCH -p gpu_a100
 #SBATCH -N 1
 #SBATCH --ntasks=1
@@ -7,13 +7,15 @@
 #SBATCH --gpus=1
 #SBATCH --mem=60G
 #SBATCH -t 24:00:00
-#SBATCH --output=slurm_rlaf_crypto_%j.out
-#SBATCH --error=slurm_rlaf_crypto_%j.err
+#SBATCH --output=slurm_rlaf_crypto_cooc_edge_%j.out
+#SBATCH --error=slurm_rlaf_crypto_cooc_edge_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
-# ─── Snellius RLAF Training: ArieNet (no COOC), glucose solver, crypto ───────
-# Standard run on crypto instances with glucose solver.
+# ─── Snellius RLAF Training: ArieNetCoocEdge, glucose solver, crypto ──────────
+# Uses use_cooc_edge=true → ArieNetRLAFCoocEdge, where the L2L co-occurrence
+# step is a full cycle member: c2l → L2L → l2c → c2l.
+# cooc_norm_mode=addition (no normalisation, raw co-occurrence counts summed in).
 # ──────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -46,11 +48,13 @@ echo "Conda env: $CONDA_ENV  (Python: $(python --version))"
 echo "NSNET_DIR: $NSNET_DIR"
 echo "==========================================="
 
-# ── Train (no COOC, glucose) ──────────────────────────────────────────────
+# ── Train (COOCEdge, addition mode, glucose) ──────────────────────────────
 python -u train_arienet_rlaf.py \
-    -n ArieNet_crypto \
+    -n ArieNet_crypto_COOCEdge_addition \
     method=grpo \
     use_cooc=false \
+    use_cooc_edge=true \
+    cooc_norm_mode=addition \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \
@@ -67,13 +71,13 @@ python -u train_arienet_rlaf.py \
     dataset.num_process_workers=16 \
     loader.batch_size=5 \
     loader.num_workers=0 \
-    optim.lr=1e-4 \
+    optim.lr=5e-5 \
     optim.weight_decay=0.0 \
     scale_sigma=0.1 \
     val_interval=5 \
     ckpt_interval=100 \
     seed=42 \
     wandb.project=nsnet-rlaf \
-    wandb.name=ArieNet_crypto
+    wandb.name=ArieNet_crypto_COOCEdge_addition
 
 echo "===== Job finished: $(date) ====="

@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --gpus=1
 #SBATCH --mem=60G
-#SBATCH -t 4:00:00
+#SBATCH -t 24:00:00
 #SBATCH --output=slurm_rlaf_crypto_nolsp_%j.out
 #SBATCH --error=slurm_rlaf_crypto_nolsp_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
