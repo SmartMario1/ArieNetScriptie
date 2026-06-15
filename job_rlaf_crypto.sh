@@ -58,14 +58,14 @@ python -u train_arienet_rlaf.py \
     training.clip_ratio=0.2 \
     training.kl_penalty=0.1 \
     training.use_amp=true \
-    training.accum_steps=4 \
+    training.accum_steps=10 \
     training.target_stat=decisions \
     solver.solver=glucose \
     solver.num_workers=16 \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=16 \
-    loader.batch_size=5 \
+    loader.batch_size=2 \
     loader.num_workers=0 \
     optim.lr=1e-4 \
     optim.weight_decay=0.0 \
