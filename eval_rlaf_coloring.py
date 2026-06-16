@@ -86,15 +86,16 @@ def _size_from_path(cnf_path: str) -> str:
 
 
 def _solve_baseline(args):
-    cnf_path, solver_dir, timeout = args
+    cnf_path, solver_dir, timeout, solver_family = args
     try:
         n_vars, clauses = parse_cnf_file(cnf_path)
+        extra = {} if solver_family == "march" else {"cpu-lim": timeout}
         stats = _solve_cnf(
             clauses,
             var_params=None,
             solver_dir=solver_dir,
-            solver="glucose",
-            **{"cpu-lim": timeout},
+            solver=solver_family,
+            **extra,
         )
     except Exception as e:
         stats = {"Result": "ERROR", "decisions": float("nan"),
@@ -105,15 +106,16 @@ def _solve_baseline(args):
 
 
 def _solve_guided(args):
-    cnf_path, var_params_np, solver_dir, timeout = args
+    cnf_path, var_params_np, solver_dir, timeout, solver_family = args
     try:
         _, clauses = parse_cnf_file(cnf_path)
+        extra = {} if solver_family == "march" else {"cpu-lim": timeout}
         stats = _solve_cnf(
             clauses,
             var_params=var_params_np,
             solver_dir=solver_dir,
-            solver="glucose",
-            **{"cpu-lim": timeout},
+            solver=solver_family,
+            **extra,
         )
     except Exception as e:
         stats = {"Result": "ERROR", "decisions": float("nan"),
@@ -232,6 +234,10 @@ def main() -> None:
                         help="DataLoader batch size for model inference.")
     parser.add_argument("--timeout", type=int, default=60,
                         help="Per-instance CPU time limit in seconds (default: 60).")
+    parser.add_argument("--solver", default="glucose", choices=["glucose", "march"],
+                        help="Solver family to use for both baseline and guided evaluation "
+                             "(default: glucose). 'march' uses march/march_weighted; "
+                             "'glucose' uses glucose/glucose_weighted.")
     parser.add_argument("--out", default="results_eval_coloring.csv",
                         help="Output CSV file (default: results_eval_coloring.csv).")
     parser.add_argument("--out-json", default="results_eval_coloring.json",
@@ -319,12 +325,12 @@ def main() -> None:
     # ── Baseline (unguided glucose) ────────────────────────────────────────
     n_steps = len(MODELS) + 2
     if run_solver:
-        print(f"\n[1/{n_steps}] Running baseline (unguided glucose) on {len(cnf_files)} instances "
+        print(f"\n[1/{n_steps}] Running baseline (unguided {args.solver}) on {len(cnf_files)} instances "
               f"with {args.workers} workers ...")
         t0 = time.time()
         baseline_results = list(tqdm(
             Parallel(n_jobs=args.workers, return_as="generator_unordered")(
-                delayed(_solve_baseline)((f, SOLVER_DIR, args.timeout)) for f in cnf_files
+                delayed(_solve_baseline)((f, SOLVER_DIR, args.timeout, args.solver)) for f in cnf_files
             ),
             total=len(cnf_files),
             desc="  baseline",
@@ -393,11 +399,13 @@ def main() -> None:
             print(f"  combine      : add  (sum, no normalisation)")
 
         # Build dataset (reuses cached BPGs from training if available)
+        # num_workers=0 forces single-threaded (main thread) dataset processing
+        # to avoid subworker locking issues.
         dataset = RLAFBPGDataset(
             path=args.test_dir,
             use_cooc=use_cooc or use_cooc_edge,
             no_precomputed_local_sat=no_lsp,
-            num_workers=max(1, args.workers // 2),
+            num_workers=0,
         )
         loader = DataLoader(
             dataset,
@@ -437,7 +445,7 @@ def main() -> None:
             if path not in valid_cnf_paths:
                 continue
             vp_np = data.var_params[:, 0, :].numpy()  # [n_vars, 2]  (1 sample, mode)
-            guided_inputs.append((path, vp_np, SOLVER_DIR, args.timeout))
+            guided_inputs.append((path, vp_np, SOLVER_DIR, args.timeout, args.solver))
 
         # Run guided solver in parallel
         print(f"  Running guided solver ({args.workers} workers) ...")
