@@ -186,7 +186,17 @@ def _solve_cnf(
         with open(tmp_path, "w") as f:
             f.write(dimacs)
         call.append(tmp_path)
-        result = subprocess.run(call, capture_output=True, text=True)
+        proc_timeout = params.pop("timeout", None)
+        try:
+            result = subprocess.run(call, capture_output=True, text=True,
+                                    timeout=proc_timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+            return {"Result": "UNKNOWN", "decisions": float("nan"),
+                    "conflicts": float("nan"), "CPU time": float("nan")}
         os.remove(tmp_path)
     else:
         # glucose_weighted when guidance is provided, unmodified glucose otherwise

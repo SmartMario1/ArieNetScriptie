@@ -89,7 +89,7 @@ def _solve_baseline(args):
     cnf_path, solver_dir, timeout, solver_family = args
     try:
         n_vars, clauses = parse_cnf_file(cnf_path)
-        extra = {} if solver_family == "march" else {"cpu-lim": timeout}
+        extra = {"timeout": timeout} if solver_family == "march" else {"cpu-lim": timeout}
         stats = _solve_cnf(
             clauses,
             var_params=None,
@@ -109,7 +109,7 @@ def _solve_guided(args):
     cnf_path, var_params_np, solver_dir, timeout, solver_family = args
     try:
         _, clauses = parse_cnf_file(cnf_path)
-        extra = {} if solver_family == "march" else {"cpu-lim": timeout}
+        extra = {"timeout": timeout} if solver_family == "march" else {"cpu-lim": timeout}
         stats = _solve_cnf(
             clauses,
             var_params=var_params_np,
