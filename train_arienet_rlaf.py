@@ -77,7 +77,7 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         use_up_features=cfg.model.use_up_features,
     )
     if cfg.get("use_cooc_edge", False):
-        kwargs["cooc_norm_mode"] = cfg.get("cooc_norm_mode", "none")
+        kwargs["combine"] = cfg.get("combine_mode", "add")
     return model_cls(**kwargs)
 
 
