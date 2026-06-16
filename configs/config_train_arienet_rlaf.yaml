@@ -16,9 +16,11 @@ method: grpo
 # ---- Whether to use the COOC (literal co-occurrence) graph extension ------
 use_cooc: false
 
-# ---- Whether to normalise cooc aggregation by degree (mean instead of sum)
-# Set to true for variable-degree graphs like 3-SAT; keep false for 3-coloring.
-cooc_normalize: false
+# ---- Co-occurrence aggregation mode: null or lse --------------------------
+# When set to 'lse', L2L messages are aggregated with log-sum-exp instead of
+# sum (mirrors how c2l messages are normalised in the base model).
+# Only used for ArieNetRLAFCooc and ArieNetRLAFCoocEdge variants.
+norm_mode: null
 
 # ---- Checkpoint handling --------------------------------------------------
 model_name: ArieNetRLAF_3SAT
@@ -75,6 +77,7 @@ model:
   activation: relu
   no_precomputed_local_sat: false
   use_up_features: false
+  combine_mode: add        # combine mode for CoocEdge: 'cat' or 'add'
 
 # ---- Policy ---------------------------------------------------------------
 # Sigma parameter for the log-normal weight distributions

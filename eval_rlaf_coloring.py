@@ -125,7 +125,8 @@ def _solve_guided(args):
     return stats
 
 
-def build_model(use_cooc: bool, use_cooc_edge: bool, no_lsp: bool) -> torch.nn.Module:
+def build_model(use_cooc: bool, use_cooc_edge: bool, no_lsp: bool,
+                norm_mode: str = None) -> torch.nn.Module:
     if use_cooc_edge:
         # COOCEdge uses combine="add" (sum) and no normalisation (l2c_msg_norm
         # normalisation is bypassed because the input is already summed)
@@ -136,22 +137,30 @@ def build_model(use_cooc: bool, use_cooc_edge: bool, no_lsp: bool) -> torch.nn.M
             activation=MODEL_ACTIVATION,
             no_precomputed_local_sat=no_lsp,
             combine="add",
+            norm_mode=norm_mode,
         )
     elif use_cooc:
-        cls = ArieNetRLAFCooc
+        return ArieNetRLAFCooc(
+            dim=MODEL_DIM,
+            n_rounds=MODEL_N_ROUNDS,
+            n_mlp_layers=MODEL_N_MLP,
+            activation=MODEL_ACTIVATION,
+            no_precomputed_local_sat=no_lsp,
+            norm_mode=norm_mode,
+        )
     else:
-        cls = ArieNetRLAF
-    return cls(
-        dim=MODEL_DIM,
-        n_rounds=MODEL_N_ROUNDS,
-        n_mlp_layers=MODEL_N_MLP,
-        activation=MODEL_ACTIVATION,
-        no_precomputed_local_sat=no_lsp,
-    )
+        return ArieNetRLAF(
+            dim=MODEL_DIM,
+            n_rounds=MODEL_N_ROUNDS,
+            n_mlp_layers=MODEL_N_MLP,
+            activation=MODEL_ACTIVATION,
+            no_precomputed_local_sat=no_lsp,
+        )
 
 
-def load_model(ckpt: str, use_cooc: bool, use_cooc_edge: bool, no_lsp: bool, device: str) -> torch.nn.Module:
-    model = build_model(use_cooc, use_cooc_edge, no_lsp)
+def load_model(ckpt: str, use_cooc: bool, use_cooc_edge: bool, no_lsp: bool, device: str,
+               norm_mode: str = None) -> torch.nn.Module:
+    model = build_model(use_cooc, use_cooc_edge, no_lsp, norm_mode=norm_mode)
     state = torch.load(ckpt, map_location="cpu", weights_only=False)
     missing, unexpected = model.load_state_dict(state, strict=False)
     if unexpected:
@@ -242,6 +251,12 @@ def main() -> None:
                         help="Output CSV file (default: results_eval_coloring.csv).")
     parser.add_argument("--out-json", default="results_eval_coloring.json",
                         help="Output JSON file (default: results_eval_coloring.json).")
+    parser.add_argument(
+        "--coocedge-norm-mode", default=None, choices=["lse"],
+        metavar="MODE",
+        help="L2L aggregation mode for the COOCEdge model. "
+             "Set to 'lse' to use log-sum-exp (default: sum)."
+    )
     parser.add_argument(
         "--models", nargs="+", default=None,
         metavar="NAME",
@@ -397,6 +412,7 @@ def main() -> None:
         print(f"  device       : {args.device}")
         if use_cooc_edge:
             print(f"  combine      : add  (sum, no normalisation)")
+            print(f"  norm_mode    : {args.coocedge_norm_mode}")
 
         # Build dataset (reuses cached BPGs from training if available)
         # num_workers=0 forces single-threaded (main thread) dataset processing
@@ -416,7 +432,9 @@ def main() -> None:
         )
 
         # Load model
-        model = load_model(ckpt, use_cooc, use_cooc_edge, no_lsp, args.device)
+        norm_mode = args.coocedge_norm_mode if use_cooc_edge else None
+        model = load_model(ckpt, use_cooc, use_cooc_edge, no_lsp, args.device,
+                           norm_mode=norm_mode)
         n_params = sum(p.numel() for p in model.parameters())
         print(f"  parameters : {n_params:,}")
 

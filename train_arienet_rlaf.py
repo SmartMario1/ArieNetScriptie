@@ -68,6 +68,7 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         model_cls = ArieNetRLAFCooc
     else:
         model_cls = ArieNetRLAF
+    norm_mode = cfg.get("norm_mode", None)
     kwargs = dict(
         dim=cfg.model.dim,
         n_rounds=cfg.model.n_rounds,
@@ -77,7 +78,9 @@ def build_model(cfg: DictConfig) -> torch.nn.Module:
         use_up_features=cfg.model.use_up_features,
     )
     if cfg.get("use_cooc_edge", False):
-        kwargs["combine"] = cfg.get("combine_mode", "add")
+        kwargs["combine"] = cfg.model.get("combine_mode", "add")
+    if model_cls in (ArieNetRLAFCooc, ArieNetRLAFCoocEdge):
+        kwargs["norm_mode"] = norm_mode
     return model_cls(**kwargs)
 
 

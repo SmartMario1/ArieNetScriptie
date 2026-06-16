@@ -193,6 +193,7 @@ class ArieNetRLAFCooc(ArieNetRLAF):
         activation: str = "relu",
         no_precomputed_local_sat: bool = False,
         use_up_features: bool = False,
+        norm_mode: str = None,
     ):
         super().__init__(
             dim=dim,
@@ -202,6 +203,8 @@ class ArieNetRLAFCooc(ArieNetRLAF):
             no_precomputed_local_sat=no_precomputed_local_sat,
             use_up_features=use_up_features,
         )
+        assert norm_mode in (None, "lse"), f"norm_mode must be None or 'lse', got {norm_mode!r}"
+        self.norm_mode = norm_mode
         # MLP that transforms aggregated co-occurrence messages (dim → dim)
         self.l2l_update = MLP(n_mlp_layers, dim, dim, dim, activation)
 
@@ -270,7 +273,10 @@ class ArieNetRLAFCooc(ArieNetRLAF):
                 # Message from source literal to destination literal
                 cooc_msgs = lit_curr[cooc_src]                     # [n_cooc, dim]
                 # Aggregate incoming co-occurrence messages at each destination
-                cooc_agg = scatter_sum(cooc_dst, cooc_msgs, n_lit, device)  # [n_lit, dim]
+                if self.norm_mode == "lse":
+                    cooc_agg = scatter_logsumexp(cooc_dst, cooc_msgs, n_lit, device)  # [n_lit, dim]
+                else:
+                    cooc_agg = scatter_sum(cooc_dst, cooc_msgs, n_lit, device)        # [n_lit, dim]
                 # Inject into c2l edge features (residual)
                 c2l = c2l + self.l2l_update(cooc_agg[data.literal_indices_per_edge])
 
@@ -312,6 +318,7 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         no_precomputed_local_sat: bool = False,
         use_up_features: bool = False,
         combine: str = "cat",
+        norm_mode: str = None,
     ):
         super().__init__(
             dim=dim,
@@ -322,7 +329,9 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
             use_up_features=use_up_features,
         )
         assert combine in ("cat", "add"), f"combine must be 'cat' or 'add', got {combine!r}"
+        assert norm_mode in (None, "lse"), f"norm_mode must be None or 'lse', got {norm_mode!r}"
         self.combine = combine
+        self.norm_mode = norm_mode
         # Learnable initial state for each co-occurrence edge (small init)
         self.cooc_edges_init = nn.Parameter(torch.randn(1, dim) * 0.01)
         # MLP: [cooc_edge_feat | src_lit_state] → message  (2*dim → dim)
@@ -373,7 +382,10 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
                 )                                                    # [n_cooc, dim]
 
                 # Aggregate messages at destination literals
-                cooc_agg = scatter_sum(cooc_dst, cooc_msg, n_lit, device)  # [n_lit, dim]
+                if self.norm_mode == "lse":
+                    cooc_agg = scatter_logsumexp(cooc_dst, cooc_msg, n_lit, device)  # [n_lit, dim]
+                else:
+                    cooc_agg = scatter_sum(cooc_dst, cooc_msg, n_lit, device)        # [n_lit, dim]
 
                 # Update cooc edge features residually from dst-literal aggregation
                 cooc_feats = cooc_feats + self.l2l_update(cooc_agg[cooc_dst])
