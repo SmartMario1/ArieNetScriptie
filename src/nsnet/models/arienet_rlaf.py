@@ -311,7 +311,7 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         activation: str = "relu",
         no_precomputed_local_sat: bool = False,
         use_up_features: bool = False,
-        cooc_norm_mode: str = "none",
+        combine: str = "cat",
     ):
         super().__init__(
             dim=dim,
@@ -321,26 +321,17 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
             no_precomputed_local_sat=no_precomputed_local_sat,
             use_up_features=use_up_features,
         )
-        # How to normalise the cooc scatter-sum aggregation:
-        #   "none" — raw sum; fine for 3-coloring (uniform, low degree)
-        #   "mean" — divide by in-degree; stable at any degree but erases
-        #            degree information entirely (hub literals look the same
-        #            as peripheral ones)
-        #   "log"  — symlog transform: sign(x)*log(1+|x|) applied element-wise
-        #            to the aggregated feature vector; compresses large magnitudes
-        #            while preserving sign and relative ordering, so high-degree
-        #            literals still produce larger signals than low-degree ones
-        if cooc_norm_mode not in ("none", "mean", "log"):
-            raise ValueError(f"cooc_norm_mode must be 'none', 'mean', or 'log', got {cooc_norm_mode!r}")
-        self.cooc_norm_mode = cooc_norm_mode
+        assert combine in ("cat", "add"), f"combine must be 'cat' or 'add', got {combine!r}"
+        self.combine = combine
         # Learnable initial state for each co-occurrence edge (small init)
         self.cooc_edges_init = nn.Parameter(torch.randn(1, dim) * 0.01)
         # MLP: [cooc_edge_feat | src_lit_state] → message  (2*dim → dim)
         self.l2l_msg = MLP(n_mlp_layers, dim * 2, dim, dim, activation)
         # MLP: aggregated incoming messages → updated cooc edge feat  (dim → dim)
         self.l2l_update = MLP(n_mlp_layers, dim, dim, dim, activation)
-        # Override l2c_msg_update: input is [c2l | cooc_lit] so 2*dim wide
-        self.l2c_msg_update = MLP(n_mlp_layers, dim * 2, dim, dim, activation)
+        # Override l2c_msg_update: input width depends on combine mode
+        l2c_in = dim * 2 if combine == "cat" else dim
+        self.l2c_msg_update = MLP(n_mlp_layers, l2c_in, dim, dim, activation)
 
     def forward(self, data):
         device = data.literal_indices_per_edge.device
@@ -358,13 +349,6 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
         if use_cooc:
             n_cooc = len(cooc_src)
             cooc_feats = (self.cooc_edges_init / self.denom).repeat(n_cooc, 1)  # [n_cooc, dim]
-            if self.cooc_norm_mode != "none":
-                # Precompute per-literal cooc in-degree.
-                _ones = torch.ones(n_cooc, 1, dtype=cooc_feats.dtype, device=device)
-                cooc_dst_degree = scatter_sum(cooc_dst, _ones, n_lit, device).clamp(min=1.0)  # [n_lit, 1]
-                if self.cooc_norm_mode == "mean":
-                    cooc_denom = cooc_dst_degree
-                # "log" mode uses symlog applied later; no precomputed denom needed
 
         # Optional UP-feature injection
         if self.use_up_features:
@@ -390,10 +374,6 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
 
                 # Aggregate messages at destination literals
                 cooc_agg = scatter_sum(cooc_dst, cooc_msg, n_lit, device)  # [n_lit, dim]
-                if self.cooc_norm_mode == "mean":
-                    cooc_agg = cooc_agg / cooc_denom
-                elif self.cooc_norm_mode == "log":
-                    cooc_agg = cooc_agg.sign() * torch.log1p(cooc_agg.abs())  # symlog
 
                 # Update cooc edge features residually from dst-literal aggregation
                 cooc_feats = cooc_feats + self.l2l_update(cooc_agg[cooc_dst])
@@ -401,14 +381,16 @@ class ArieNetRLAFCoocEdge(ArieNetRLAF):
                 # Per-edge cooc signal: cooc edge features broadcast back to BPG
                 # edges via the literal each BPG edge is connected to
                 cooc_lit = scatter_sum(cooc_dst, cooc_feats, n_lit, device)  # [n_lit, dim]
-                if self.cooc_norm_mode == "mean":
-                    cooc_lit = cooc_lit / cooc_denom
-                elif self.cooc_norm_mode == "log":
-                    cooc_lit = cooc_lit.sign() * torch.log1p(cooc_lit.abs())  # symlog
-                l2c_src = torch.cat([c2l, cooc_lit[data.literal_indices_per_edge]], dim=1)  # [n_edges, 2*dim]
+                if self.combine == "cat":
+                    l2c_src = torch.cat([c2l, cooc_lit[data.literal_indices_per_edge]], dim=1)  # [n_edges, 2*dim]
+                else:
+                    l2c_src = c2l + cooc_lit[data.literal_indices_per_edge]                    # [n_edges, dim]
             else:
-                # No cooc edges: pad with zeros to keep input width consistent
-                l2c_src = torch.cat([c2l, torch.zeros_like(c2l)], dim=1)
+                if self.combine == "cat":
+                    # Pad with zeros to keep input width consistent
+                    l2c_src = torch.cat([c2l, torch.zeros_like(c2l)], dim=1)
+                else:
+                    l2c_src = c2l
 
             # ---- Clause → Literal (l2c step) ------------------------------------
             # Takes from l2l (cooc_lit per edge) when cooc is available,
