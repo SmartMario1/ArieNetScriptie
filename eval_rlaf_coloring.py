@@ -405,12 +405,12 @@ def main() -> None:
             path=args.test_dir,
             use_cooc=use_cooc or use_cooc_edge,
             no_precomputed_local_sat=no_lsp,
-            num_workers=0,
+            num_workers=1,
         )
         loader = DataLoader(
             dataset,
             batch_size=args.batch_size,
-            num_workers=0,
+            num_workers=1,
             shuffle=False,
             collate_fn=_collate_skip_none,
         )
