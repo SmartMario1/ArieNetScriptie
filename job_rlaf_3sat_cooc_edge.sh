@@ -7,8 +7,8 @@
 #SBATCH --gpus=1
 #SBATCH --mem=60G
 #SBATCH -t 24:00:00
-#SBATCH --output=slurm_rlaf_3sat_cooc_edge_%j_log.out
-#SBATCH --error=slurm_rlaf_3sat_cooc_edge_%j_log.err
+#SBATCH --output=slurm_rlaf_3sat_cooc_edge_%j.out
+#SBATCH --error=slurm_rlaf_3sat_cooc_edge_%j.err
 
 # ─── Snellius RLAF Training: ArieNetCoocEdge, glucose solver ───────────────
 # Uses use_cooc_edge=true → ArieNetRLAFCoocEdge, where the L2L co-occurrence
@@ -38,11 +38,11 @@ echo "NSNET_DIR: $NSNET_DIR"
 echo "==========================================="
 
 python -u train_arienet_rlaf.py \
-    -n ArieNet_3sat_COOCEdge_log \
+    -n ArieNet_3sat_COOCEdge \
     method=grpo \
     use_cooc=false \
     use_cooc_edge=true \
-    cooc_norm_mode=log \
+    combine_mode=add \
     training.iterations=2000 \
     training.cnf_per_iter=100 \
     training.num_samples=40 \
@@ -54,7 +54,6 @@ python -u train_arienet_rlaf.py \
     training.target_stat=decisions \
     solver.solver=glucose \
     solver.num_workers=16 \
-	solver.solver_dir="../solvercopy1/" \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
@@ -67,6 +66,6 @@ python -u train_arienet_rlaf.py \
     ckpt_interval=100 \
     seed=42 \
     wandb.project=nsnet-rlaf \
-    wandb.name=ArieNet_3sat_COOCEdge_log
+    wandb.name=ArieNet_3sat_COOCEdge
 
 echo "===== Job finished: $(date) ====="
