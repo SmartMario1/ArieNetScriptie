@@ -7,8 +7,8 @@
 #SBATCH --gpus=1
 #SBATCH --mem=60G
 #SBATCH -t 24:00:00
-#SBATCH --output=slurm_rlaf_3sat_cooc_march_%j.out
-#SBATCH --error=slurm_rlaf_3sat_cooc_march_%j.err
+#SBATCH --output=slurm_rlaf_3sat_cooc_march_lse_%j.out
+#SBATCH --error=slurm_rlaf_3sat_cooc_march_lse_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=YOUR_EMAIL@example.com
 
@@ -49,7 +49,7 @@ echo "==========================================="
 
 # ── Train (COOC, march) ────────────────────────────────────────────────────
 python -u train_arienet_rlaf.py \
-    -n ArieNet_3sat_COOC_march \
+    -n ArieNet_3sat_COOC_march_lse \
     method=grpo \
     use_cooc=true \
     training.iterations=2000 \
@@ -63,6 +63,7 @@ python -u train_arienet_rlaf.py \
     training.target_stat=decisions \
     solver.solver=march \
     solver.num_workers=16 \
+    solver.solver_dir="../solvercopy1/" \
     "dataset.train_path=$TRAIN_PATH" \
     "dataset.val_path=$VAL_PATH" \
     dataset.num_process_workers=4 \
@@ -71,6 +72,7 @@ python -u train_arienet_rlaf.py \
     optim.lr=1e-4 \
     optim.weight_decay=0.0 \
     scale_sigma=0.1 \
+    norm_mode=lse \
     val_interval=5 \
     ckpt_interval=100 \
     seed=42 \
