@@ -72,6 +72,8 @@ MODEL_N_MLP      = 3
 MODEL_ACTIVATION = "relu"
 MODEL_SCALE_SIGMA = 0.1
 
+ALL_MODELS = list(MODEL_META.keys())
+
 
 # ─── Helpers ──────────────────────────────────────────────────────────────
 
